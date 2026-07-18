@@ -922,3 +922,611 @@ stories는 프로젝트에서 가장 중요한 Entity이며,
 
 를 모두 관리한다.
 
+# 13. stories
+
+## 13.1 Overview
+
+stories 테이블은 StorySeed의 핵심 엔티티이다.
+
+모든 이야기의 메타데이터를 저장하며, AI 생성 과정의 시작점이 된다.
+
+Story 하나는 하나의 사용자가 생성하며, 여러 개의 Chapter를 가진다.
+
+Story는 다음 정보를 관리한다.
+
+- 이야기 제목
+- 이야기 설명
+- 장르
+- 세계관
+- 공개 여부
+- 현재 진행 상태
+- 이야기 길이
+- AI 생성 방식
+- 대상 연령
+- 언어
+- 현재 챕터
+
+---
+
+## 13.2 Responsibilities
+
+stories 테이블은 다음 기능을 담당한다.
+
+- 이야기 생성
+- 이어쓰기
+- AI 생성 시작
+- 챕터 연결
+- 캐릭터 연결
+- 리포트 생성
+- 북마크 대상
+- 공개 여부 관리
+- 진행 상태 관리
+
+---
+
+## 13.3 Table
+
+```
+stories
+```
+
+---
+
+## 13.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | 이야기 PK |
+| user_id | BIGINT | NO | FK | 작성자 |
+| genre_id | BIGINT | NO | FK | 장르 |
+| world_id | BIGINT | NO | FK | 세계관 |
+| title | VARCHAR(200) | NO | | 제목 |
+| description | TEXT | YES | | 이야기 소개 |
+| story_type | ENUM | NO | | 이야기 종류 |
+| visibility | ENUM | NO | | 공개 여부 |
+| story_length | ENUM | NO | | 이야기 길이 |
+| age_group | ENUM | NO | | 대상 연령 |
+| language | VARCHAR(10) | NO | | 언어 |
+| cover_image_url | VARCHAR(500) | YES | | 표지 이미지 |
+| current_chapter | INT | NO | | 현재 챕터 |
+| status | ENUM | NO | | 진행 상태 |
+| completed_at | DATETIME | YES | | 종료일 |
+| created_at | DATETIME | NO | | 생성일 |
+| updated_at | DATETIME | NO | | 수정일 |
+
+---
+
+## 13.5 Enum Definition
+
+### StoryType
+
+```
+ORIGINAL
+
+FAIRYTALE
+
+SELF_INSERT
+```
+
+설명
+
+ORIGINAL
+
+사용자가 직접 만드는 이야기
+
+---
+
+FAIRYTALE
+
+기존 동화를 새롭게 각색
+
+---
+
+SELF_INSERT
+
+사용자가 주인공인 이야기
+
+---
+
+### Visibility
+
+```
+PUBLIC
+
+PRIVATE
+
+UNLISTED
+```
+
+PUBLIC
+
+검색 가능
+
+---
+
+PRIVATE
+
+작성자만 조회
+
+---
+
+UNLISTED
+
+링크가 있는 사람만 조회 가능
+
+---
+
+### StoryLength
+
+```
+SHORT
+
+MEDIUM
+
+LONG
+```
+
+SHORT
+
+약 5 Chapter
+
+---
+
+MEDIUM
+
+약 10 Chapter
+
+---
+
+LONG
+
+20 Chapter 이상
+
+---
+
+### StoryStatus
+
+```
+DRAFT
+
+IN_PROGRESS
+
+COMPLETED
+
+ARCHIVED
+```
+
+---
+
+### AgeGroup
+
+```
+CHILD
+
+TEEN
+
+ADULT
+```
+
+---
+
+## 13.6 Column Description
+
+### title
+
+이야기의 제목이다.
+
+최대 200자를 허용한다.
+
+AI가 자동 생성하거나 사용자가 직접 입력할 수 있다.
+
+---
+
+### description
+
+이야기의 간단한 소개이다.
+
+검색 및 목록 화면에서 사용한다.
+
+---
+
+### genre_id
+
+장르 FK이다.
+
+Fantasy
+
+Mystery
+
+Romance
+
+Sci-Fi
+
+Adventure
+
+등을 참조한다.
+
+---
+
+### world_id
+
+세계관 FK이다.
+
+현대
+
+중세
+
+우주
+
+학교
+
+무협
+
+등을 참조한다.
+
+---
+
+### story_type
+
+스토리 생성 방식을 정의한다.
+
+서비스의 핵심 기능을 구분하는 컬럼이다.
+
+---
+
+### visibility
+
+공개 범위를 정의한다.
+
+목록 조회 시 반드시 권한 검사를 수행한다.
+
+---
+
+### story_length
+
+AI가 생성할 최대 Chapter 수를 결정하는 기준이다.
+
+---
+
+### age_group
+
+AI Prompt 생성 시 안전성 기준으로 사용한다.
+
+예시
+
+CHILD
+
+폭력성 최소화
+
+---
+
+TEEN
+
+약한 긴장감 허용
+
+---
+
+ADULT
+
+보다 자유로운 전개 허용
+
+---
+
+### language
+
+이야기 생성 언어
+
+예시
+
+```
+ko
+
+en
+
+ja
+```
+
+향후 다국어 서비스를 지원한다.
+
+---
+
+### cover_image_url
+
+표지 이미지 주소
+
+MVP에서는 Nullable
+
+향후 AI 이미지 생성 기능과 연결된다.
+
+---
+
+### current_chapter
+
+현재 진행 중인 Chapter 번호
+
+Chapter 생성 시 자동 증가한다.
+
+---
+
+### status
+
+현재 이야기 상태
+
+Draft
+
+↓
+
+In Progress
+
+↓
+
+Completed
+
+↓
+
+Archived
+
+순으로 변경된다.
+
+---
+
+### completed_at
+
+이야기 종료 시간
+
+종료 전에는 NULL
+
+---
+
+## 13.7 Constraints
+
+Primary Key
+
+```
+PK_stories
+```
+
+Foreign Key
+
+```
+user_id
+
+↓
+
+users.id
+```
+
+```
+genre_id
+
+↓
+
+genres.id
+```
+
+```
+world_id
+
+↓
+
+worlds.id
+```
+
+---
+
+## 13.8 Index Strategy
+
+| Index | Purpose |
+|---------|----------|
+| idx_story_user | 사용자 이야기 조회 |
+| idx_story_status | 진행 상태 조회 |
+| idx_story_genre | 장르 검색 |
+| idx_story_world | 세계관 검색 |
+| idx_story_created | 최신순 조회 |
+| idx_story_visibility | 공개 이야기 조회 |
+
+---
+
+## 13.9 Relationship
+
+Story
+
+↓
+
+Character
+
+```
+1 : 1
+```
+
+---
+
+Story
+
+↓
+
+Chapter
+
+```
+1 : N
+```
+
+---
+
+Story
+
+↓
+
+StorySummary
+
+```
+1 : N
+```
+
+---
+
+Story
+
+↓
+
+Report
+
+```
+1 : 1
+```
+
+---
+
+Story
+
+↓
+
+Bookmark
+
+```
+1 : N
+```
+
+---
+
+Story
+
+↓
+
+AIGenerationLog
+
+```
+1 : N
+```
+
+---
+
+## 13.10 Business Rules
+
+### Rule 1
+
+Story 생성 시 Character가 함께 생성된다.
+
+---
+
+### Rule 2
+
+Story 삭제 시
+
+- Chapter
+- Character
+- Summary
+- Report
+- AI Log
+
+모두 삭제된다.
+
+---
+
+### Rule 3
+
+Completed Story는 수정할 수 없다.
+
+---
+
+### Rule 4
+
+Private Story는 작성자만 조회 가능하다.
+
+---
+
+### Rule 5
+
+Archived Story는 AI 이어쓰기를 수행할 수 없다.
+
+---
+
+## 13.11 Cascade Policy
+
+| Parent | Child | Cascade |
+|----------|----------|----------|
+| Story | Chapter | ALL |
+| Story | Character | ALL |
+| Story | StorySummary | ALL |
+| Story | Report | ALL |
+| Story | AIGenerationLog | ALL |
+| Story | Bookmark | REMOVE |
+
+---
+
+## 13.12 Fetch Strategy
+
+기본 정책
+
+```
+LAZY
+```
+
+Story 조회 시
+
+Character
+
+Chapter
+
+Report
+
+Summary
+
+를 즉시 가져오지 않는다.
+
+필요 시
+
+Fetch Join
+
+또는
+
+EntityGraph
+
+를 사용한다.
+
+---
+
+## 13.13 Future Expansion
+
+stories는 다음 기능을 고려하여 설계한다.
+
+- 좋아요
+- 조회수
+- 댓글
+- 협업 작성
+- 번역본
+- AI 표지 이미지
+- 음성 생성
+- 애니메이션 생성
+- PDF 출판
+
+---
+
+## 13.14 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | stories |
+| PK | id |
+| FK | user_id, genre_id, world_id |
+| Parent | users |
+| Child | chapters, characters, reports, summaries, bookmarks, ai_generation_logs |
+| Soft Delete | 미사용 |
+| Audit | BaseEntity |
+
+---
+
+# 14. Next Section
+
+다음 장에서는 Character Entity를 정의한다.
+
+Character는 StorySeed에서 AI가 일관성 있는 이야기를 생성하기 위한 가장 중요한 데이터 중 하나이며,
+
+- 외형
+- 성격
+- 말투
+- 목표
+- 능력
+- 배경
+
+등을 관리한다.
