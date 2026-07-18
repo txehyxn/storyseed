@@ -507,3 +507,418 @@ Entity는 기능별 패키지로 분리한다.
 - Future Expansion
 
 ---
+
+# 11. users
+
+## 11.1 Overview
+
+users 테이블은 StorySeed의 회원 정보를 저장하는 핵심 테이블이다.
+
+사용자의 인증, 권한, 로그인 방식, 계정 상태를 관리하며 모든 Story의 최상위 부모(Entity)가 된다.
+
+---
+
+## 11.2 Responsibilities
+
+users 테이블은 다음 정보를 관리한다.
+
+- 회원가입
+- 로그인
+- OAuth 계정 연동
+- 권한 관리
+- 계정 상태 관리
+- 마지막 로그인 시간
+- Story 소유자 관리
+
+---
+
+## 11.3 Table
+
+```
+users
+```
+
+---
+
+## 11.4 Columns
+
+| Column | Type | Null | Key | Default | Description |
+|---------|------|------|-----|----------|-------------|
+| id | BIGINT | NO | PK | AUTO_INCREMENT | 회원 PK |
+| email | VARCHAR(255) | NO | UK | - | 로그인 이메일 |
+| password | VARCHAR(255) | YES | - | NULL | BCrypt 암호화 비밀번호 |
+| nickname | VARCHAR(50) | NO | UK | - | 닉네임 |
+| provider | ENUM | NO | - | LOCAL | 로그인 제공자 |
+| provider_id | VARCHAR(255) | YES | - | NULL | OAuth Provider 사용자 ID |
+| role | ENUM | NO | - | USER | 사용자 권한 |
+| status | ENUM | NO | - | ACTIVE | 계정 상태 |
+| last_login_at | DATETIME | YES | - | NULL | 마지막 로그인 |
+| created_at | DATETIME | NO | - | CURRENT_TIMESTAMP | 생성일 |
+| updated_at | DATETIME | NO | - | CURRENT_TIMESTAMP | 수정일 |
+
+---
+
+## 11.5 Enum Definition
+
+### Provider
+
+```
+LOCAL
+
+GOOGLE
+
+KAKAO
+
+NAVER
+```
+
+---
+
+### Role
+
+```
+USER
+
+ADMIN
+
+SUPER_ADMIN
+```
+
+---
+
+### Status
+
+```
+ACTIVE
+
+SUSPENDED
+
+WITHDRAWN
+```
+
+---
+
+## 11.6 Column Description
+
+### id
+
+모든 회원의 고유 식별자이다.
+
+절대 변경되지 않는다.
+
+---
+
+### email
+
+로그인에 사용하는 이메일이다.
+
+동일한 이메일은 존재할 수 없다.
+
+Unique Index를 생성한다.
+
+---
+
+### password
+
+BCrypt 해시값을 저장한다.
+
+OAuth 로그인 사용자는 NULL을 허용한다.
+
+---
+
+### nickname
+
+서비스 내 표시되는 이름이다.
+
+중복을 허용하지 않는다.
+
+---
+
+### provider
+
+로그인 방식을 저장한다.
+
+예시
+
+```
+LOCAL
+
+GOOGLE
+
+KAKAO
+
+NAVER
+```
+
+---
+
+### provider_id
+
+OAuth 로그인 사용자의 고유 식별자이다.
+
+LOCAL 회원은 NULL이다.
+
+---
+
+### role
+
+서비스 권한을 정의한다.
+
+예시
+
+```
+USER
+
+ADMIN
+
+SUPER_ADMIN
+```
+
+---
+
+### status
+
+회원 상태를 저장한다.
+
+ACTIVE
+
+정상 회원
+
+---
+
+SUSPENDED
+
+관리자 정지
+
+---
+
+WITHDRAWN
+
+탈퇴 처리
+
+---
+
+### last_login_at
+
+가장 최근 로그인 시간을 저장한다.
+
+로그인 성공 시 갱신한다.
+
+---
+
+## 11.7 Constraints
+
+### Primary Key
+
+```
+PK_users
+
+(id)
+```
+
+---
+
+### Unique Key
+
+```
+UK_users_email
+
+(email)
+```
+
+```
+UK_users_nickname
+
+(nickname)
+```
+
+---
+
+### Check Constraints
+
+provider는 Provider Enum만 허용한다.
+
+role은 Role Enum만 허용한다.
+
+status는 Status Enum만 허용한다.
+
+---
+
+## 11.8 Index Strategy
+
+| Index | Purpose |
+|---------|----------|
+| idx_users_email | 로그인 |
+| idx_users_nickname | 닉네임 검색 |
+| idx_users_status | 활성 사용자 조회 |
+| idx_users_provider | OAuth 조회 |
+
+---
+
+## 11.9 Relationship
+
+User
+
+↓
+
+Story
+
+```
+1 : N
+```
+
+---
+
+User
+
+↓
+
+Bookmark
+
+```
+1 : N
+```
+
+---
+
+User
+
+↓
+
+RefreshToken
+
+```
+1 : N
+```
+
+---
+
+User
+
+↓
+
+UserSetting
+
+```
+1 : 1
+```
+
+---
+
+## 11.10 Business Rules
+
+### Rule 1
+
+이메일은 반드시 고유해야 한다.
+
+---
+
+### Rule 2
+
+닉네임은 반드시 고유해야 한다.
+
+---
+
+### Rule 3
+
+LOCAL 로그인은 password가 반드시 존재해야 한다.
+
+---
+
+### Rule 4
+
+OAuth 로그인은 provider_id가 반드시 존재해야 한다.
+
+---
+
+### Rule 5
+
+WITHDRAWN 계정은 로그인할 수 없다.
+
+---
+
+### Rule 6
+
+SUSPENDED 계정은 관리자 해제 전까지 로그인할 수 없다.
+
+---
+
+## 11.11 JPA Mapping
+
+```java
+@OneToMany(
+    mappedBy = "user",
+    cascade = CascadeType.NONE,
+    orphanRemoval = false
+)
+private List<Story> stories;
+```
+
+---
+
+```java
+@OneToMany(
+    mappedBy = "user"
+)
+private List<Bookmark> bookmarks;
+```
+
+---
+
+```java
+@OneToOne(
+    mappedBy = "user"
+)
+private UserSetting userSetting;
+```
+
+---
+
+## 11.12 Future Expansion
+
+향후 다음 기능을 추가할 수 있도록 설계한다.
+
+- 이메일 인증
+- 비밀번호 재설정
+- 프로필 이미지
+- 자기소개
+- 국가
+- 언어 설정
+- AI 사용량 통계
+- 유료 구독 여부
+
+추가 컬럼은 별도 Migration을 통해 관리한다.
+
+---
+
+## 11.13 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | users |
+| PK | id |
+| FK | 없음 |
+| Unique | email, nickname |
+| Parent | 없음 |
+| Child | stories, bookmarks, refresh_tokens, user_settings |
+| Soft Delete | 미사용 |
+| Audit | BaseEntity |
+
+---
+
+# 12. Next Section
+
+다음 장에서는 StorySeed의 핵심 테이블인 **stories**를 정의한다.
+
+stories는 프로젝트에서 가장 중요한 Entity이며,
+
+- AI 생성
+- 챕터 진행
+- 캐릭터
+- 장르
+- 세계관
+- 공개 여부
+- 진행 상태
+
+를 모두 관리한다.
+
