@@ -2475,3 +2475,732 @@ Choice는 단순한 버튼이 아니라
 를 담당하는 핵심 Entity이다.
 
 ---
+
+# 19. choices
+
+## 19.1 Overview
+
+choices 테이블은 사용자가 선택할 수 있는 선택지를 저장한다.
+
+Chapter 하나에는 여러 개의 Choice가 존재한다.
+
+사용자는 그중 하나를 선택하며,
+
+선택 결과는 ChoiceResult를 통해 AI에게 전달된다.
+
+Choice 자체는 결과를 가지지 않는다.
+
+Choice는
+
+"무엇을 선택했는가"
+
+만 저장한다.
+
+실제 결과는 ChoiceResult가 담당한다.
+
+---
+
+## 19.2 Responsibilities
+
+Choice는 다음 정보를 관리한다.
+
+- 선택지 내용
+- 표시 순서
+- 선택 가능 여부
+- 기본 선택 여부
+- 선택 결과 연결
+
+---
+
+## 19.3 Table
+
+```
+choices
+```
+
+---
+
+## 19.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | Choice PK |
+| chapter_id | BIGINT | NO | FK | Chapter |
+| choice_order | INT | NO | | 표시 순서 |
+| content | VARCHAR(500) | NO | | 선택지 |
+| is_default | BOOLEAN | NO | | 기본 선택 |
+| is_enabled | BOOLEAN | NO | | 활성 여부 |
+| created_at | DATETIME | NO | | 생성일 |
+| updated_at | DATETIME | NO | | 수정일 |
+
+---
+
+## 19.5 Example
+
+Chapter
+
+```
+용이 당신 앞에 나타났습니다.
+```
+
+Choice
+
+```
+① 검을 뽑는다.
+
+② 도망친다.
+
+③ 대화한다.
+```
+
+사용자는 하나만 선택한다.
+
+---
+
+## 19.6 Constraints
+
+Primary Key
+
+```
+PK_choices
+```
+
+Foreign Key
+
+```
+chapter_id
+
+↓
+
+chapters.id
+```
+
+---
+
+Unique
+
+```
+(chapter_id, choice_order)
+```
+
+---
+
+## 19.7 Index
+
+| Index | Purpose |
+|---------|----------|
+| idx_choice_chapter | Chapter 조회 |
+| idx_choice_order | 정렬 |
+
+---
+
+## 19.8 Relationship
+
+Chapter
+
+↓
+
+Choice
+
+```
+1:N
+```
+
+Choice
+
+↓
+
+ChoiceResult
+
+```
+1:1
+```
+
+---
+
+## 19.9 Business Rules
+
+Choice는 최소 2개 이상 생성한다.
+
+권장 개수는
+
+```
+3~4개
+```
+
+이다.
+
+Choice 삭제는 허용하지 않는다.
+
+Story 삭제 시 함께 삭제된다.
+
+---
+
+# 20. choice_results
+
+## 20.1 Why
+
+StorySeed의 핵심 테이블이다.
+
+일반 AI 소설 서비스에는 없는 기능이다.
+
+ChoiceResult는
+
+선택의 결과를
+
+"텍스트"
+
+가 아니라
+
+"데이터"
+
+로 저장한다.
+
+AI는 이 데이터를 기반으로 다음 Chapter를 생성한다.
+
+---
+
+## 20.2 Responsibilities
+
+ChoiceResult는
+
+- 호감도 변화
+
+- 능력치 변화
+
+- 아이템 획득
+
+- 플래그 저장
+
+- 스토리 진행
+
+을 관리한다.
+
+---
+
+## 20.3 Table
+
+```
+choice_results
+```
+
+---
+
+## 20.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | PK |
+| choice_id | BIGINT | NO | FK | Choice |
+| summary | VARCHAR(500) | NO | | AI 전달용 요약 |
+| affection_delta | INT | NO | | 호감도 |
+| courage_delta | INT | NO | | 용기 |
+| intelligence_delta | INT | NO | | 지능 |
+| morality_delta | INT | NO | | 도덕성 |
+| item_reward | VARCHAR(200) | YES | | 획득 아이템 |
+| unlocked_flag | VARCHAR(100) | YES | | 플래그 |
+| next_prompt_hint | TEXT | YES | | Prompt 힌트 |
+| created_at | DATETIME | NO | | 생성일 |
+| updated_at | DATETIME | NO | | 수정일 |
+
+---
+
+## 20.5 Example
+
+Choice
+
+```
+용과 대화한다.
+```
+
+ChoiceResult
+
+```
+summary
+
+용과 우호적인 관계를 맺었다.
+
+affection_delta
+
++20
+
+courage_delta
+
++5
+
+item_reward
+
+용의 비늘
+
+flag
+
+dragon_friend
+```
+
+AI는
+
+```
+dragon_friend
+```
+
+플래그를 참고하여
+
+이후 Chapter에서
+
+용이 도움을 주도록 생성할 수 있다.
+
+---
+
+## 20.6 Future Expansion
+
+향후
+
+다음 데이터를 추가할 수 있다.
+
+```
+gold
+
+hp
+
+mp
+
+relationship
+
+quest
+
+achievement
+
+ending_score
+```
+
+---
+
+## 20.7 AI Prompt Example
+
+PromptBuilder는
+
+ChoiceResult를
+
+아래처럼 Prompt에 포함한다.
+
+```
+Player Choice
+
+용과 대화했다.
+
+Result
+
+- 용과 친해짐
+
+- 용의 비늘 획득
+
+- 용기 +5
+
+- dragon_friend 플래그 활성화
+```
+
+AI는
+
+이를 기반으로
+
+다음 Chapter를 생성한다.
+
+---
+
+## 20.8 Relationship
+
+Choice
+
+↓
+
+ChoiceResult
+
+```
+1 : 1
+```
+
+---
+
+## 20.9 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | choice_results |
+| PK | id |
+| FK | choice_id |
+| Parent | choices |
+| Child | 없음 |
+| Cascade | ALL |
+
+---
+
+# 21. Next Section
+
+다음 장에서는 StorySummary와 PromptTemplate을 정의한다.
+
+여기서부터는
+
+AI 비용 절감,
+
+Prompt 버전 관리,
+
+장편 소설 지원 구조를 설계한다.
+
+# 22. story_summaries
+
+## 22.1 Overview
+
+story_summaries 테이블은 장편 이야기에서 AI에게 전달할 Context를 압축하여 저장한다.
+
+LLM은 모든 Chapter를 매번 입력으로 받으면 토큰 사용량이 급격히 증가한다.
+
+StorySeed는 일정 개수의 Chapter가 생성될 때마다 StorySummary를 생성하여 이후 Prompt에 활용한다.
+
+이 구조를 통해
+
+- Token 비용 절감
+- 응답 속도 향상
+- 장편 소설 지원
+
+을 가능하게 한다.
+
+---
+
+## 22.2 Responsibilities
+
+StorySummary는 다음 정보를 관리한다.
+
+- 요약 대상 Chapter 범위
+- AI가 생성한 요약
+- 요약 버전
+- 생성 시점
+
+---
+
+## 22.3 Table
+
+```
+story_summaries
+```
+
+---
+
+## 22.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | PK |
+| story_id | BIGINT | NO | FK | Story |
+| start_chapter | INT | NO | | 시작 Chapter |
+| end_chapter | INT | NO | | 마지막 Chapter |
+| summary | LONGTEXT | NO | | AI 요약 |
+| summary_version | VARCHAR(20) | NO | | 요약 버전 |
+| ai_model | VARCHAR(100) | YES | | 생성 모델 |
+| created_at | DATETIME | NO | | 생성일 |
+| updated_at | DATETIME | NO | | 수정일 |
+
+---
+
+## 22.5 Example
+
+Chapter
+
+```
+1~5
+```
+
+↓
+
+Summary
+
+```
+주인공은 숲에서 용을 만나 친구가 되었으며,
+용의 비늘을 얻었다.
+
+왕국으로 향하는 여정을 시작하였다.
+```
+
+↓
+
+AI Prompt
+
+```
+Summary
+
++
+
+최근 Chapter 2개
+
+↓
+
+새로운 Chapter 생성
+```
+
+---
+
+## 22.6 Business Rules
+
+Summary는 일정 기준마다 생성한다.
+
+기본 정책
+
+```
+5 Chapter
+```
+
+마다 생성한다.
+
+---
+
+Summary는 수정하지 않는다.
+
+새 Summary를 생성한다.
+
+---
+
+## 22.7 Relationship
+
+Story
+
+↓
+
+StorySummary
+
+```
+1:N
+```
+
+---
+
+## 22.8 Index Strategy
+
+| Index | Purpose |
+|---------|----------|
+| idx_summary_story | Story 조회 |
+| idx_summary_range | Chapter 범위 조회 |
+
+---
+
+## 22.9 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | story_summaries |
+| Parent | stories |
+| Child | 없음 |
+| Cascade | ALL |
+
+---
+
+# 23. prompt_templates
+
+## 23.1 Overview
+
+PromptTemplate은 AI에게 전달하는 Prompt를 관리한다.
+
+Prompt를 코드에 직접 작성하지 않고 DB에서 관리하여 버전 변경과 실험(A/B Test)이 가능하도록 설계한다.
+
+---
+
+## 23.2 Responsibilities
+
+PromptTemplate은
+
+- Prompt 내용
+- Prompt 목적
+- Prompt 버전
+- 활성 여부
+
+를 관리한다.
+
+---
+
+## 23.3 Table
+
+```
+prompt_templates
+```
+
+---
+
+## 23.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | PK |
+| name | VARCHAR(100) | NO | | Prompt 이름 |
+| version | VARCHAR(20) | NO | | 버전 |
+| purpose | VARCHAR(100) | NO | | 사용 목적 |
+| template | LONGTEXT | NO | | Prompt 내용 |
+| is_active | BOOLEAN | NO | | 활성 여부 |
+| created_at | DATETIME | NO | | 생성일 |
+| updated_at | DATETIME | NO | | 수정일 |
+
+---
+
+## 23.5 Prompt Types
+
+예시
+
+```
+Story Generation
+
+Chapter Generation
+
+Summary Generation
+
+Ending Analysis
+
+Image Prompt
+
+Character Prompt
+```
+
+---
+
+## 23.6 Example Template
+
+```
+You are a professional storyteller.
+
+Character
+
+{{character}}
+
+Summary
+
+{{summary}}
+
+Current Chapter
+
+{{chapter}}
+
+Player Choice
+
+{{choice}}
+
+Current Flags
+
+{{flags}}
+
+Inventory
+
+{{inventory}}
+
+Write the next chapter.
+```
+
+---
+
+## 23.7 Placeholder Rules
+
+Prompt는 반드시 Placeholder를 사용한다.
+
+예시
+
+```
+{{character}}
+
+{{summary}}
+
+{{inventory}}
+
+{{flags}}
+
+{{choice}}
+
+{{language}}
+```
+
+직접 문자열을 연결하지 않는다.
+
+PromptBuilder가 Placeholder를 치환한다.
+
+---
+
+## 23.8 Version Policy
+
+Prompt 수정 시
+
+UPDATE를 수행하지 않는다.
+
+새 Version을 생성한다.
+
+예시
+
+```
+v1.0
+
+↓
+
+v1.1
+
+↓
+
+v2.0
+```
+
+기존 Prompt는 유지한다.
+
+---
+
+## 23.9 Relationship
+
+PromptTemplate
+
+↓
+
+Chapter
+
+```
+1:N
+```
+
+---
+
+PromptTemplate
+
+↓
+
+AIGenerationLog
+
+```
+1:N
+```
+
+---
+
+## 23.10 Business Rules
+
+항상 하나 이상의 활성 Prompt가 존재해야 한다.
+
+비활성 Prompt는 새로운 Chapter 생성에 사용할 수 없다.
+
+Prompt Version은 생성 이후 변경하지 않는다.
+
+---
+
+## 23.11 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | prompt_templates |
+| Parent | 없음 |
+| Child | chapters, ai_generation_logs |
+| Audit | BaseEntity |
+
+---
+
+# 24. Next Section
+
+다음 장에서는 AI Generation Log를 정의한다.
+
+AI Generation Log는 운영 환경에서
+
+- Prompt 추적
+- 응답 시간 분석
+- Token 사용량
+- 비용 분석
+- 오류 원인 추적
+
+을 위한 핵심 테이블이다.
