@@ -1972,3 +1972,506 @@ Chapter는 StorySeed의 핵심 데이터이며,
 Chapter 설계는 이후 AI Prompt 설계와 직접 연결된다.
 
 ---
+
+# 17. chapters
+
+## 17.1 Overview
+
+chapters 테이블은 StorySeed에서 생성되는 실제 이야기 본문을 저장한다.
+
+Story 하나는 여러 개의 Chapter를 가진다.
+
+각 Chapter는 AI가 생성한 결과이며,
+사용자의 선택에 따라 다음 Chapter가 생성된다.
+
+Chapter는 단순한 본문 저장 테이블이 아니라,
+
+- 이야기 진행
+- AI 생성 결과
+- Context 관리
+- 토큰 관리
+- 이어쓰기
+
+를 담당하는 핵심 엔티티이다.
+
+---
+
+## 17.2 Responsibilities
+
+Chapter는 다음 정보를 관리한다.
+
+- Chapter 번호
+- 제목
+- 본문
+- AI 생성 결과
+- 생성 순서
+- 이전 Chapter 연결
+- 다음 Chapter 연결
+- 생성 토큰
+- Prompt Version
+- Story Summary 생성 기준
+
+---
+
+## 17.3 Table
+
+```
+chapters
+```
+
+---
+
+## 17.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | 챕터 PK |
+| story_id | BIGINT | NO | FK | Story |
+| chapter_number | INT | NO | | 챕터 번호 |
+| title | VARCHAR(200) | NO | | 챕터 제목 |
+| content | LONGTEXT | NO | | AI 생성 본문 |
+| previous_chapter_id | BIGINT | YES | FK | 이전 Chapter |
+| next_chapter_id | BIGINT | YES | FK | 다음 Chapter |
+| prompt_template_id | BIGINT | YES | FK | Prompt Template |
+| prompt_version | VARCHAR(20) | YES | | Prompt 버전 |
+| ai_model | VARCHAR(100) | YES | | GPT / Claude |
+| prompt_tokens | INT | YES | | Prompt Token |
+| completion_tokens | INT | YES | | Completion Token |
+| total_tokens | INT | YES | | 전체 Token |
+| generation_time_ms | INT | YES | | 생성 시간(ms) |
+| regenerated | BOOLEAN | NO | | 재생성 여부 |
+| created_at | DATETIME | NO | | 생성일 |
+| updated_at | DATETIME | NO | | 수정일 |
+
+---
+
+## 17.5 Column Description
+
+### story_id
+
+Story FK
+
+하나의 Story는 여러 Chapter를 가진다.
+
+---
+
+### chapter_number
+
+이야기 진행 순서
+
+예시
+
+```
+1
+
+2
+
+3
+
+4
+
+...
+```
+
+Story 내부에서 중복될 수 없다.
+
+---
+
+### title
+
+Chapter 제목
+
+예시
+
+```
+숲속의 만남
+
+첫 번째 시험
+
+배신
+
+최후의 결전
+```
+
+---
+
+### content
+
+AI가 생성한 이야기 본문
+
+LONGTEXT를 사용한다.
+
+장편 소설도 저장 가능해야 한다.
+
+---
+
+### previous_chapter_id
+
+이전 Chapter
+
+첫 번째 Chapter는 NULL이다.
+
+---
+
+### next_chapter_id
+
+다음 Chapter
+
+마지막 Chapter는 NULL이다.
+
+---
+
+### prompt_template_id
+
+사용된 Prompt Template
+
+Prompt 버전 관리에 사용된다.
+
+---
+
+### prompt_version
+
+Prompt Template Version
+
+예시
+
+```
+v1.0
+
+v1.1
+
+v2.0
+```
+
+---
+
+### ai_model
+
+AI 모델
+
+예시
+
+```
+GPT-5
+
+Claude Sonnet
+
+Gemini 3
+```
+
+---
+
+### prompt_tokens
+
+Prompt Token 사용량
+
+---
+
+### completion_tokens
+
+AI 응답 Token
+
+---
+
+### total_tokens
+
+Prompt
+
++
+
+Completion
+
+---
+
+### generation_time_ms
+
+AI 응답 시간
+
+밀리초 단위
+
+---
+
+### regenerated
+
+재생성 여부
+
+true
+
+AI 다시 생성
+
+false
+
+최초 생성
+
+---
+
+## 17.6 Constraints
+
+Primary Key
+
+```
+PK_chapters
+```
+
+Foreign Key
+
+```
+story_id
+
+↓
+
+stories.id
+```
+
+```
+prompt_template_id
+
+↓
+
+prompt_templates.id
+```
+
+---
+
+Unique
+
+```
+(story_id, chapter_number)
+```
+
+Story 내부에서 Chapter 번호는 중복될 수 없다.
+
+---
+
+## 17.7 Index Strategy
+
+| Index | Purpose |
+|---------|----------|
+| idx_chapter_story | Story 조회 |
+| idx_chapter_number | 이어쓰기 |
+| idx_chapter_created | 최신 Chapter |
+| idx_chapter_prompt | Prompt 분석 |
+
+---
+
+## 17.8 Relationship
+
+Story
+
+↓
+
+Chapter
+
+```
+1 : N
+```
+
+---
+
+Chapter
+
+↓
+
+Choice
+
+```
+1 : N
+```
+
+---
+
+Chapter
+
+↓
+
+AIGenerationLog
+
+```
+1 : N
+```
+
+---
+
+## 17.9 Business Rules
+
+### Rule 1
+
+Chapter는 Story 없이 존재할 수 없다.
+
+---
+
+### Rule 2
+
+Chapter 번호는 1부터 시작한다.
+
+---
+
+### Rule 3
+
+Chapter 삭제는 허용하지 않는다.
+
+Story 삭제 시 함께 삭제된다.
+
+---
+
+### Rule 4
+
+Chapter 생성 후에는 본문 수정이 불가능하다.
+
+재생성 기능을 사용한다.
+
+---
+
+### Rule 5
+
+Prompt Version은 생성 이후 변경하지 않는다.
+
+---
+
+### Rule 6
+
+Chapter 생성이 완료되면 Choice가 생성된다.
+
+---
+
+## 17.10 JPA Mapping
+
+Story
+
+```java
+@OneToMany(
+    mappedBy = "story",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true
+)
+private List<Chapter> chapters;
+```
+
+---
+
+Chapter
+
+```java
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "story_id")
+private Story story;
+```
+
+---
+
+## 17.11 AI Generation Flow
+
+Story 생성
+
+↓
+
+Character 생성
+
+↓
+
+Prompt 생성
+
+↓
+
+AI 호출
+
+↓
+
+Chapter 저장
+
+↓
+
+Choice 생성
+
+↓
+
+사용자 선택
+
+↓
+
+다음 Chapter 생성
+
+---
+
+## 17.12 Story Summary Policy
+
+LONG Story에서는
+
+모든 Chapter를 AI에게 보내지 않는다.
+
+예시
+
+```
+1~10 Chapter
+
+↓
+
+Summary 생성
+
+↓
+
+11 Chapter 생성
+
+↓
+
+Summary
+
++
+
+최근 2개 Chapter
+
+↓
+
+AI 호출
+```
+
+이 구조를 통해 Token 비용을 줄인다.
+
+---
+
+## 17.13 Future Expansion
+
+향후 추가 예정
+
+- Chapter 이미지
+- 음성 생성
+- 애니메이션 생성
+- PDF Export
+- 읽기 완료 여부
+- 좋아요
+- 댓글
+
+---
+
+## 17.14 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | chapters |
+| PK | id |
+| FK | story_id |
+| Parent | stories |
+| Child | choices, ai_generation_logs |
+| Cascade | ALL |
+| Audit | BaseEntity |
+
+---
+
+# 18. Next Section
+
+다음 장에서는 Choice Entity를 정의한다.
+
+Choice는 StorySeed에서 가장 중요한 사용자 입력 데이터이다.
+
+사용자가 선택한 내용에 따라 AI가 다음 Chapter를 생성한다.
+
+Choice는 단순한 버튼이 아니라
+
+- 선택지
+- 선택 결과
+- AI Prompt 연결
+- 이야기 분기
+
+를 담당하는 핵심 Entity이다.
+
+---
