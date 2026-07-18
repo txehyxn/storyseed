@@ -3204,3 +3204,561 @@ AI Generation Log는 운영 환경에서
 - 오류 원인 추적
 
 을 위한 핵심 테이블이다.
+
+# 25. ai_generation_logs
+
+## 25.1 Overview
+
+ai_generation_logs 테이블은 모든 AI 생성 요청과 응답을 기록한다.
+
+운영 환경에서는 AI 호출 실패, 응답 품질 저하, 토큰 사용량 증가, 응답 속도 저하 등의 문제를 분석할 수 있어야 한다.
+
+이 테이블은 디버깅뿐 아니라 Prompt 개선과 비용 분석에도 활용된다.
+
+---
+
+## 25.2 Responsibilities
+
+AI Generation Log는 다음 정보를 관리한다.
+
+- 사용한 AI 모델
+- Prompt Template
+- 실제 Prompt
+- AI 응답
+- Token 사용량
+- 응답 시간
+- 예상 비용
+- 요청 결과
+- 오류 메시지
+
+---
+
+## 25.3 Table
+
+```
+ai_generation_logs
+```
+
+---
+
+## 25.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | 로그 PK |
+| story_id | BIGINT | NO | FK | Story |
+| chapter_id | BIGINT | YES | FK | Chapter |
+| prompt_template_id | BIGINT | YES | FK | Prompt Template |
+| ai_model | VARCHAR(100) | NO | | 사용 모델 |
+| prompt | LONGTEXT | NO | | 실제 Prompt |
+| response | LONGTEXT | YES | | AI 응답 |
+| prompt_tokens | INT | YES | | Prompt Token |
+| completion_tokens | INT | YES | | Completion Token |
+| total_tokens | INT | YES | | 총 Token |
+| estimated_cost | DECIMAL(10,4) | YES | | 예상 비용 |
+| response_time_ms | INT | YES | | 응답 시간 |
+| status | ENUM | NO | | 요청 상태 |
+| error_message | TEXT | YES | | 오류 메시지 |
+| created_at | DATETIME | NO | | 생성일 |
+
+---
+
+## 25.5 Status Enum
+
+```
+SUCCESS
+
+FAILED
+
+TIMEOUT
+
+CANCELLED
+```
+
+---
+
+## 25.6 Example
+
+| Model | Total Token | Time | Status |
+|--------|------------:|-----:|--------|
+| GPT-5 | 2,130 | 4,520 ms | SUCCESS |
+| GPT-5 | 0 | 30,000 ms | TIMEOUT |
+| Claude Sonnet | 1,845 | 3,102 ms | SUCCESS |
+
+---
+
+## 25.7 Business Rules
+
+### Rule 1
+
+AI 호출 시 반드시 Log를 생성한다.
+
+---
+
+### Rule 2
+
+AI 호출 실패도 반드시 기록한다.
+
+---
+
+### Rule 3
+
+Prompt는 그대로 저장한다.
+
+Prompt를 수정하여 저장하지 않는다.
+
+---
+
+### Rule 4
+
+응답이 없는 경우에도 상태(Status)는 저장한다.
+
+---
+
+### Rule 5
+
+PromptTemplate 삭제 시 기존 Log는 유지한다.
+
+---
+
+## 25.8 Relationship
+
+Story
+
+↓
+
+AI Generation Log
+
+```
+1:N
+```
+
+Chapter
+
+↓
+
+AI Generation Log
+
+```
+1:N
+```
+
+PromptTemplate
+
+↓
+
+AI Generation Log
+
+```
+1:N
+```
+
+---
+
+## 25.9 Index Strategy
+
+| Index | Purpose |
+|---------|----------|
+| idx_ai_story | Story별 조회 |
+| idx_ai_model | 모델별 통계 |
+| idx_ai_status | 실패 분석 |
+| idx_ai_created | 기간별 조회 |
+
+---
+
+## 25.10 운영 활용 예시
+
+운영자는 다음과 같은 질문에 답할 수 있다.
+
+- 어떤 모델이 가장 빠른가?
+- 어떤 Prompt Version의 품질이 좋은가?
+- 하루 Token 사용량은 얼마인가?
+- 실패율이 가장 높은 시간대는 언제인가?
+- 평균 응답 시간은 얼마인가?
+
+---
+
+## 25.11 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | ai_generation_logs |
+| Parent | stories, chapters, prompt_templates |
+| Child | 없음 |
+| Audit | 생성일만 관리 |
+
+---
+
+# 26. bookmarks
+
+## 26.1 Overview
+
+bookmarks 테이블은 사용자가 관심 있는 Story를 저장한다.
+
+북마크는 Story의 소유 여부와 관계없이 생성할 수 있다.
+
+---
+
+## 26.2 Responsibilities
+
+Bookmark는 다음 정보를 관리한다.
+
+- 사용자
+- Story
+- 북마크 생성일
+
+---
+
+## 26.3 Table
+
+```
+bookmarks
+```
+
+---
+
+## 26.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | PK |
+| user_id | BIGINT | NO | FK | 사용자 |
+| story_id | BIGINT | NO | FK | Story |
+| created_at | DATETIME | NO | | 생성일 |
+
+---
+
+## 26.5 Constraints
+
+Primary Key
+
+```
+PK_bookmarks
+```
+
+Foreign Key
+
+```
+user_id
+
+↓
+
+users.id
+```
+
+```
+story_id
+
+↓
+
+stories.id
+```
+
+Unique Key
+
+```
+(user_id, story_id)
+```
+
+동일 Story를 중복 북마크할 수 없다.
+
+---
+
+## 26.6 Relationship
+
+User
+
+↓
+
+Bookmark
+
+```
+1:N
+```
+
+Story
+
+↓
+
+Bookmark
+
+```
+1:N
+```
+
+---
+
+## 26.7 Business Rules
+
+### Rule 1
+
+동일 Story는 한 번만 북마크할 수 있다.
+
+---
+
+### Rule 2
+
+Story 삭제 시 관련 Bookmark도 삭제한다.
+
+---
+
+### Rule 3
+
+User 탈퇴 시 Bookmark를 함께 삭제한다.
+
+---
+
+## 26.8 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | bookmarks |
+| Parent | users, stories |
+| Child | 없음 |
+| Cascade | REMOVE |
+
+---
+
+# 27. Next Section
+
+다음 장에서는 StorySeed의 **Game State Layer**를 정의한다.
+
+여기서는 다음 테이블을 설계한다.
+
+- character_states
+- story_flags
+- items
+- inventories
+
+이 계층은 AI가 현재 이야기의 상태를 이해하고, 선택에 따른 변화를 지속적으로 반영하기 위한 핵심 구조이다.
+
+# 28. character_states
+
+## 28.1 Overview
+
+character_states 테이블은 캐릭터의 현재 서사 상태(Narrative State)를 관리한다.
+
+Character가 캐릭터의 고정된 설정이라면,
+
+CharacterState는 이야기가 진행되면서 변화하는 정보를 저장한다.
+
+이 테이블의 목적은 RPG처럼 능력치를 관리하는 것이 아니라,
+
+AI가 이야기의 흐름을 자연스럽게 이어갈 수 있도록 현재 상태를 제공하는 것이다.
+
+---
+
+## 28.2 Responsibilities
+
+CharacterState는 다음 정보를 관리한다.
+
+- 현재 감정
+- 현재 목표
+- 현재 위치
+- 다른 인물과의 관계
+- 이야기 진행에 따른 상태 변화
+
+---
+
+## 28.3 Table
+
+```
+character_states
+```
+
+---
+
+## 28.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | PK |
+| story_id | BIGINT | NO | FK | Story |
+| character_id | BIGINT | NO | FK | Character |
+| current_emotion | VARCHAR(100) | YES | | 현재 감정 |
+| current_goal | VARCHAR(255) | YES | | 현재 목표 |
+| current_location | VARCHAR(255) | YES | | 현재 위치 |
+| relationship_summary | TEXT | YES | | 주요 관계 변화 |
+| narrative_note | TEXT | YES | | AI 참고 메모 |
+| updated_at | DATETIME | NO | | 마지막 갱신 |
+
+---
+
+## 28.5 Example
+
+현재 상태
+
+```
+Emotion
+
+불안
+
+Goal
+
+왕국에 도착하기
+
+Location
+
+깊은 숲
+
+Relationship
+
+용과 신뢰를 쌓고 있음
+```
+
+AI는 다음 Chapter를 생성할 때 이 정보를 참고하여 이야기의 일관성을 유지한다.
+
+---
+
+## 28.6 Business Rules
+
+CharacterState는 AI가 새로운 Chapter를 생성한 후 갱신한다.
+
+이전 상태는 삭제하지 않고 새로운 내용으로 갱신한다.
+
+Character의 고정 정보는 변경하지 않는다.
+
+---
+
+## 28.7 Relationship
+
+Story
+
+↓
+
+CharacterState
+
+```
+1:N
+```
+
+Character
+
+↓
+
+CharacterState
+
+```
+1:N
+```
+
+---
+
+## 28.8 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | character_states |
+| Parent | stories, characters |
+| Child | 없음 |
+
+---
+
+# 29. story_flags
+
+## 29.1 Overview
+
+story_flags 테이블은 이야기에서 이미 발생한 중요한 사건(Facts)을 기록한다.
+
+StoryFlag는 게임 이벤트가 아니라,
+
+AI가 반드시 기억해야 하는 이야기의 사실을 저장하는 역할을 한다.
+
+---
+
+## 29.2 Responsibilities
+
+StoryFlag는 다음 정보를 관리한다.
+
+- 중요한 사건 발생 여부
+- 이야기에서 획득한 핵심 정보
+- 특정 인물과의 관계 변화
+- 이후 전개에 영향을 주는 사실
+
+---
+
+## 29.3 Table
+
+```
+story_flags
+```
+
+---
+
+## 29.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | PK |
+| story_id | BIGINT | NO | FK | Story |
+| flag_key | VARCHAR(100) | NO | | 사건 식별자 |
+| flag_value | BOOLEAN | NO | | 발생 여부 |
+| description | TEXT | YES | | 설명 |
+| created_at | DATETIME | NO | | 생성일 |
+
+---
+
+## 29.5 Example
+
+| Flag | Value |
+|------|-------|
+| met_old_man | TRUE |
+| dragon_friend | TRUE |
+| accepted_crown | FALSE |
+| found_secret_letter | TRUE |
+
+---
+
+## 29.6 Why StoryFlag?
+
+AI는 StoryFlag를 통해
+
+- 이미 만난 인물을 다시 처음 만나는 것처럼 행동하지 않고
+- 이미 해결한 사건을 다시 반복하지 않으며
+- 사용자의 선택을 지속적으로 반영한다.
+
+StoryFlag는 이야기의 기억을 유지하는 핵심 데이터이다.
+
+---
+
+## 29.7 Business Rules
+
+StoryFlag는 사용자의 선택 또는 AI가 생성한 Chapter 결과에 따라 생성된다.
+
+이미 존재하는 Flag는 같은 의미로 중복 생성하지 않는다.
+
+Flag 삭제는 일반적으로 수행하지 않는다.
+
+---
+
+## 29.8 Relationship
+
+Story
+
+↓
+
+StoryFlag
+
+```
+1:N
+```
+
+---
+
+## 29.9 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | story_flags |
+| Parent | stories |
+| Child | 없음 |
+
+---
+
+# 30. Next Section
+
+다음 장에서는 StorySeed의 Story Item 구조를 정의한다.
+
+Story Item은 전투 장비가 아니라,
+
+이야기의 흐름을 변화시키는 중요한 물건과 단서를 관리하기 위한 구조이다.
