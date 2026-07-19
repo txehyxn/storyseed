@@ -1336,3 +1336,267 @@ AI Log, Prompt, Report 관련 Repository는 기능 구현 시점에 추가한다
 다음 장에서는 DTO(Data Transfer Object) 설계 원칙을 정의한다.
 
 StorySeed는 Entity를 직접 API에 노출하지 않으며, Request DTO와 Response DTO를 분리하여 사용한다.
+
+# 29. DTO Design
+
+## 29.1 Overview
+
+StorySeed는 Entity를 API 응답으로 직접 반환하지 않는다.
+
+모든 요청(Request)과 응답(Response)은 DTO(Data Transfer Object)를 사용한다.
+
+DTO를 사용함으로써
+
+- Entity 보호
+- API 구조 분리
+- 유지보수성 향상
+- 보안 강화
+
+를 달성할 수 있다.
+
+---
+
+## 29.2 DTO Responsibilities
+
+DTO는 다음 역할을 담당한다.
+
+- 클라이언트 요청 전달
+- 응답 데이터 반환
+- 입력값 검증
+- API 데이터 구조 정의
+
+DTO에는 비즈니스 로직을 작성하지 않는다.
+
+---
+
+## 29.3 DTO Package Structure
+
+```
+dto
+
+├── auth
+│   ├── LoginRequest
+│   ├── LoginResponse
+│   ├── SignupRequest
+│   └── TokenResponse
+│
+├── user
+│   ├── UserResponse
+│   ├── UserUpdateRequest
+│   └── UserSettingResponse
+│
+├── story
+│   ├── StoryCreateRequest
+│   ├── StoryUpdateRequest
+│   ├── StoryResponse
+│   └── StorySummaryResponse
+│
+├── chapter
+│   ├── ChapterResponse
+│   └── ChapterCreateResponse
+│
+├── choice
+│   ├── ChoiceRequest
+│   └── ChoiceResponse
+│
+├── bookmark
+│   └── BookmarkResponse
+│
+└── report
+    └── EndingReportResponse
+```
+
+기능(Feature) 단위로 DTO를 분리한다.
+
+---
+
+# 30. Request DTO
+
+Request DTO는 클라이언트가 서버에 전달하는 데이터를 정의한다.
+
+예시
+
+```java
+public class StoryCreateRequest {
+
+    @NotBlank
+    private String title;
+
+    @NotBlank
+    private String genre;
+
+    @NotBlank
+    private String world;
+
+}
+```
+
+Request DTO는 Validation을 포함할 수 있다.
+
+---
+
+# 31. Response DTO
+
+Response DTO는 클라이언트에게 반환되는 데이터를 정의한다.
+
+예시
+
+```java
+public class StoryResponse {
+
+    private Long id;
+
+    private String title;
+
+    private String genre;
+
+    private String status;
+
+}
+```
+
+Response DTO는 필요한 데이터만 포함한다.
+
+---
+
+# 32. Validation Strategy
+
+StorySeed는 Jakarta Validation을 사용한다.
+
+대표적으로 사용하는 Validation
+
+- @NotNull
+- @NotBlank
+- @Email
+- @Size
+- @Pattern
+
+예시
+
+```java
+@NotBlank
+private String nickname;
+
+@Email
+private String email;
+
+@Size(max = 50)
+private String title;
+```
+
+Validation 실패 시 GlobalExceptionHandler에서 처리한다.
+
+---
+
+# 33. DTO Design Principles
+
+### Principle 1
+
+Entity를 Request로 사용하지 않는다.
+
+---
+
+### Principle 2
+
+Entity를 Response로 반환하지 않는다.
+
+---
+
+### Principle 3
+
+Request DTO와 Response DTO를 분리한다.
+
+---
+
+### Principle 4
+
+DTO에는 비즈니스 로직을 작성하지 않는다.
+
+---
+
+### Principle 5
+
+Validation은 DTO에서 수행한다.
+
+---
+
+# 34. Entity ↔ DTO Conversion
+
+StorySeed에서는 Service 계층에서 Entity와 DTO를 변환한다.
+
+예시
+
+```
+Controller
+
+↓
+
+Request DTO
+
+↓
+
+Service
+
+↓
+
+Entity
+
+↓
+
+Repository
+
+↓
+
+Entity
+
+↓
+
+Response DTO
+
+↓
+
+Controller
+```
+
+별도의 Mapper 라이브러리는 사용하지 않는다.
+
+규모가 크지 않은 프로젝트이므로 필요한 변환 메서드를 직접 작성한다.
+
+---
+
+# 35. MVP Scope
+
+현재 프로젝트에서 사용하는 DTO
+
+- LoginRequest
+- SignupRequest
+- StoryCreateRequest
+- StoryResponse
+- ChapterResponse
+- ChoiceRequest
+- ChoiceResponse
+- UserResponse
+- BookmarkResponse
+
+프로젝트 진행에 따라 필요한 DTO를 추가한다.
+
+---
+
+# 36. Future Expansion
+
+프로젝트 규모가 커질 경우 다음 기술을 검토한다.
+
+- MapStruct
+- Record DTO
+- Response Wrapper
+- API Versioning
+
+현재 MVP에서는 적용하지 않는다.
+
+---
+
+# 37. Next Section
+
+다음 장에서는 Exception Handling 전략을 정의한다.
+
+GlobalExceptionHandler를 통해 예외를 일관된 형식으로 처리하고, 사용자에게 명확한 오류 메시지를 제공하는 방법을 설명한다.
