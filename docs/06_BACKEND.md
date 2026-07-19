@@ -3526,3 +3526,236 @@ StorySeed Database는 다음 원칙을 따른다.
 다음 장에서는 StorySeed의 ERD(Entity Relationship Diagram)를 정의한다.
 
 ERD를 통해 전체 테이블 구조와 관계를 시각적으로 설명한다.
+
+# 137. Entity Relationship Diagram (ERD)
+
+## 137.1 Overview
+
+StorySeed의 ERD(Entity Relationship Diagram)는 데이터베이스 테이블 간의 관계를 시각적으로 표현한다.
+
+각 Entity는 역할을 명확히 분리하며, 외래키(Foreign Key)를 통해 데이터의 무결성을 유지한다.
+
+MVP에서는 핵심 기능 구현에 필요한 최소한의 관계만 설계한다.
+
+---
+
+# 138. ERD Structure
+
+```text
++------------------+
+|      User        |
++------------------+
+| id               |
+| email            |
+| password         |
+| nickname         |
+| role             |
+| created_at       |
+| updated_at       |
++------------------+
+          |
+          | 1 : N
+          |
+          ▼
++------------------+
+|      Story       |
++------------------+
+| id               |
+| user_id (FK)     |
+| title            |
+| genre            |
+| world            |
+| protagonist_name |
+| protagonist_desc |
+| status           |
+| created_at       |
+| updated_at       |
++------------------+
+          |
+          | 1 : N
+          |
+          ▼
++------------------+
+|     Chapter      |
++------------------+
+| id               |
+| story_id (FK)    |
+| chapter_number   |
+| title            |
+| content          |
+| created_at       |
++------------------+
+          |
+          | 1 : N
+          |
+          ▼
++------------------+
+|      Choice      |
++------------------+
+| id               |
+| chapter_id (FK)  |
+| choice_order     |
+| content          |
++------------------+
+
+User
+ ├── Bookmark
+ └── Report
+
+Story
+ ├── Bookmark
+ └── Report
+```
+
+---
+
+# 139. Relationship Summary
+
+각 Entity의 관계는 다음과 같다.
+
+| Parent | Child | Cardinality |
+|---------|-------|-------------|
+| User | Story | 1 : N |
+| Story | Chapter | 1 : N |
+| Chapter | Choice | 1 : N |
+| User | Bookmark | 1 : N |
+| Story | Bookmark | 1 : N |
+| User | Report | 1 : N |
+| Story | Report | 1 : N |
+
+---
+
+# 140. User Entity
+
+User는 서비스의 회원 정보를 저장한다.
+
+관계
+
+```text
+User
+
+├── Story
+
+├── Bookmark
+
+└── Report
+```
+
+하나의 사용자는 여러 Story를 생성할 수 있다.
+
+---
+
+# 141. Story Entity
+
+Story는 AI 소설의 기본 정보를 저장한다.
+
+관계
+
+```text
+Story
+
+├── Chapter
+
+├── Bookmark
+
+└── Report
+```
+
+Story는 여러 Chapter를 가진다.
+
+---
+
+# 142. Chapter Entity
+
+Chapter는 Story의 진행 내용을 저장한다.
+
+관계
+
+```text
+Chapter
+
+└── Choice
+```
+
+하나의 Chapter는 여러 Choice를 가진다.
+
+---
+
+# 143. Choice Entity
+
+Choice는 사용자가 선택할 수 있는 선택지를 저장한다.
+
+각 Choice는 하나의 Chapter에만 속한다.
+
+MVP에서는 선택지를 3개로 고정한다.
+
+---
+
+# 144. Bookmark Entity
+
+Bookmark는 사용자가 저장한 Story를 관리한다.
+
+동일 사용자가 동일 Story를 여러 번 저장하지 못하도록 복합 UNIQUE 제약조건을 적용한다.
+
+```text
+(user_id, story_id)
+```
+
+---
+
+# 145. Report Entity
+
+Report는 Story 신고 정보를 저장한다.
+
+필요한 경우 동일 사용자의 중복 신고를 제한할 수 있다.
+
+---
+
+# 146. ERD Design Principles
+
+StorySeed ERD는 다음 원칙을 따른다.
+
+1. 모든 관계는 Foreign Key를 사용한다.
+2. 단방향 연관관계를 우선 적용한다.
+3. 불필요한 다대다(M:N) 관계는 사용하지 않는다.
+4. 데이터 중복을 최소화한다.
+5. 확장을 고려한 구조로 설계한다.
+
+---
+
+# 147. MVP Scope
+
+현재 MVP에서 사용하는 Entity
+
+- User
+- Story
+- Chapter
+- Choice
+- Bookmark
+- Report
+
+MVP에서는 Character, Inventory, StoryFlag 등은 포함하지 않는다.
+
+---
+
+# 148. Future Expansion
+
+서비스 확장 시 다음 Entity를 추가할 수 있다.
+
+- Character
+- CharacterState
+- Inventory
+- StoryFlag
+- PromptTemplate
+- AIGenerationLog
+- Notification
+
+현재 MVP에서는 구현하지 않는다.
+
+---
+
+# 149. Next Section
+
+다음 장에서는 StorySeed API Design을 정의한다.
+
+REST API 설계 원칙과 URL 구조, 요청 및 응답 형식을 설명한다.
