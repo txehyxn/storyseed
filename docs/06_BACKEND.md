@@ -1845,3 +1845,323 @@ Controller에서는 try-catch를 사용하지 않는다.
 다음 장에서는 Backend 보안(Security) 구조를 정의한다.
 
 JWT 인증, Spring Security 설정, 권한(Role) 관리 및 인증 흐름을 설명한다.
+
+# 49. Security Structure
+
+## 49.1 Overview
+
+StorySeed는 회원 인증과 접근 권한 관리를 위해 Spring Security를 사용한다.
+
+MVP에서는 서버가 로그인 상태를 관리하는 **Session 기반 인증 방식**을 적용한다.
+
+현재 프로젝트는 Spring Boot와 Thymeleaf를 함께 사용하는 웹 애플리케이션이므로 JWT 방식보다 Session 인증이 구현이 단순하고 안정적이다.
+
+---
+
+## 49.2 Security Goals
+
+StorySeed의 보안 기능은 다음을 목표로 한다.
+
+- 회원가입 및 로그인 처리
+- 비밀번호 암호화
+- 로그인 사용자 식별
+- 비로그인 사용자의 접근 제한
+- 다른 사용자의 Story 접근 차단
+- 관리자 기능 접근 제한
+- CSRF 공격 방어
+- 안전한 로그아웃 처리
+
+MVP에서는 실제 서비스 사용에 필요한 기본 보안 기능만 구현한다.
+
+---
+
+# 50. Authentication Strategy
+
+StorySeed MVP는 Session 기반 인증을 사용한다.
+
+인증 흐름은 다음과 같다.
+
+```text
+사용자가 이메일과 비밀번호 입력
+        ↓
+로그인 요청
+        ↓
+Spring Security 인증
+        ↓
+UserDetailsService 사용자 조회
+        ↓
+비밀번호 검증
+        ↓
+인증 성공
+        ↓
+Session 생성
+        ↓
+로그인 상태 유지
+```
+
+로그인 성공 후 서버는 Session에 인증 정보를 저장하며, 이후 요청마다 Session을 통해 로그인 여부를 확인한다.
+
+---
+
+# 51. Why Session Authentication
+
+StorySeed는 다음 이유로 Session 인증을 선택하였다.
+
+- Spring Security와 자연스럽게 연동된다.
+- Thymeleaf 기반 프로젝트에 적합하다.
+- 구현이 단순하다.
+- JWT 및 Refresh Token 관리가 필요 없다.
+- 프로젝트 완성 속도를 높일 수 있다.
+- 유지보수가 쉽다.
+
+향후 React 등으로 프론트엔드와 백엔드를 분리할 경우 JWT 인증으로 전환할 수 있다.
+
+---
+
+# 52. Security Package Structure
+
+```text
+security
+
+├── SecurityConfig
+├── CustomUserDetails
+└── CustomUserDetailsService
+```
+
+MVP에서는 꼭 필요한 클래스만 구현한다.
+
+---
+
+# 53. User Authentication Data
+
+로그인에 필요한 사용자 정보는 다음과 같다.
+
+```text
+User
+
+├── id
+├── email
+├── password
+├── nickname
+├── role
+├── createdAt
+└── updatedAt
+```
+
+로그인 ID는 이메일을 사용하며, 비밀번호는 BCrypt로 암호화하여 저장한다.
+
+---
+
+# 54. Password Encryption
+
+비밀번호 암호화에는 BCryptPasswordEncoder를 사용한다.
+
+```java
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+}
+```
+
+회원가입 시
+
+```java
+String encodedPassword =
+        passwordEncoder.encode(request.getPassword());
+```
+
+로그인 시 Spring Security가 암호화된 비밀번호를 자동으로 비교한다.
+
+---
+
+# 55. CustomUserDetails
+
+Spring Security에서 현재 로그인한 사용자의 정보를 관리하기 위해 CustomUserDetails를 사용한다.
+
+CustomUserDetails에는 다음 정보를 포함한다.
+
+- 사용자 ID
+- 이메일
+- 닉네임
+- 권한(Role)
+
+MVP에서는 계정 잠금, 만료 기능은 사용하지 않는다.
+
+---
+
+# 56. CustomUserDetailsService
+
+CustomUserDetailsService는 이메일을 기준으로 사용자를 조회한다.
+
+```java
+@Service
+@RequiredArgsConstructor
+public class CustomUserDetailsService
+        implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String email)
+            throws UsernameNotFoundException {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException(
+                                "사용자를 찾을 수 없습니다."
+                        )
+                );
+
+        return new CustomUserDetails(user);
+    }
+
+}
+```
+
+---
+
+# 57. Security Configuration
+
+SecurityConfig에서는 URL 접근 권한과 로그인 설정을 관리한다.
+
+기본 접근 권한
+
+| URL | 권한 |
+|------|------|
+| / | 모두 허용 |
+| /auth/** | 모두 허용 |
+| /css/** | 모두 허용 |
+| /js/** | 모두 허용 |
+| /images/** | 모두 허용 |
+| /stories/** | 로그인 사용자 |
+| /users/** | 로그인 사용자 |
+| /admin/** | 관리자 |
+
+---
+
+# 58. Role Strategy
+
+StorySeed는 최소한의 권한만 사용한다.
+
+```java
+public enum Role {
+
+    USER,
+
+    ADMIN
+
+}
+```
+
+- USER : 일반 회원
+- ADMIN : 관리자
+
+복잡한 권한 체계는 MVP 이후 확장한다.
+
+---
+
+# 59. Current User Access
+
+현재 로그인한 사용자는 Session에서 가져온다.
+
+```java
+@AuthenticationPrincipal
+CustomUserDetails userDetails
+```
+
+사용자 ID를 URL이나 요청 파라미터로 전달받지 않는다.
+
+---
+
+# 60. Story Ownership Validation
+
+Story 조회, 수정, 삭제 시 반드시 Story 소유자를 확인한다.
+
+Repository 예시
+
+```java
+Optional<Story> findByIdAndUserId(
+        Long storyId,
+        Long userId
+);
+```
+
+이를 통해 다른 사용자의 Story 접근을 방지한다.
+
+---
+
+# 61. CSRF Protection
+
+Spring Security의 기본 CSRF 보호 기능을 유지한다.
+
+MVP에서는 CSRF를 비활성화하지 않는다.
+
+---
+
+# 62. Login & Logout
+
+로그인 기능
+
+- 이메일 로그인
+- 로그인 실패 메시지 표시
+- Session 생성
+
+로그아웃 기능
+
+- Session 삭제
+- JSESSIONID 삭제
+- 메인 페이지 이동
+
+---
+
+# 63. Security Design Principles
+
+StorySeed는 다음 원칙을 따른다.
+
+1. 비밀번호는 BCrypt로 암호화한다.
+2. 로그인 사용자는 Session으로 관리한다.
+3. Story는 소유자만 접근할 수 있다.
+4. 관리자 기능은 Role 기반으로 제한한다.
+5. CSRF 보호를 유지한다.
+6. 내부 오류 정보를 사용자에게 노출하지 않는다.
+
+---
+
+# 64. MVP Scope
+
+현재 MVP에서 구현하는 보안 기능
+
+- Spring Security
+- Session 로그인
+- 회원가입
+- 로그인
+- 로그아웃
+- BCrypt 암호화
+- CustomUserDetails
+- URL 권한 관리
+- Story 소유권 검사
+- CSRF 보호
+
+---
+
+# 65. Future Expansion
+
+서비스 확장 시 다음 기능을 추가할 수 있다.
+
+- JWT 인증
+- Refresh Token
+- OAuth2 로그인
+- 이메일 인증
+- 비밀번호 찾기
+- 로그인 실패 횟수 제한
+- 2단계 인증
+
+현재 MVP에서는 구현하지 않는다.
+
+---
+
+# 66. Next Section
+
+다음 장에서는 AI Service Layer를 설명한다.
+
+AI 요청부터 Chapter 생성, 선택지 생성, 데이터 저장까지의 전체 흐름을 정의한다.
