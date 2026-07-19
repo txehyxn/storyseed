@@ -2918,3 +2918,429 @@ MVP 이후 확장 가능한 기능
 ERD와 테이블 관계, 컬럼 설계, 인덱스 전략을 설명한다.
 ```
 
+```md
+# 104. Database Design
+
+## 104.1 Overview
+
+StorySeed는 MySQL을 사용하여 데이터를 저장한다.
+
+데이터베이스는 정규화를 기본으로 설계하며, 조회 성능이 필요한 경우 인덱스를 추가한다.
+
+MVP에서는 불필요한 테이블을 최소화하여 유지보수가 쉬운 구조를 목표로 한다.
+
+---
+
+## 104.2 Database Goals
+
+데이터베이스 설계 목표는 다음과 같다.
+
+- 데이터 무결성 유지
+- 명확한 테이블 관계
+- 쉬운 유지보수
+- 빠른 조회
+- AI Story 진행 데이터 저장
+- 확장 가능한 구조
+
+---
+
+# 105. Database Structure
+
+StorySeed MVP의 테이블 구성은 다음과 같다.
+
+```text
+users
+
+stories
+
+chapters
+
+choices
+
+bookmarks
+
+reports
+```
+
+MVP에서는 핵심 기능에 필요한 테이블만 구현한다.
+
+---
+
+# 106. Entity Relationship
+
+```text
+User
+ │
+ ├────── Story
+ │          │
+ │          ├────── Chapter
+ │          │            │
+ │          │            └────── Choice
+ │          │
+ │          ├────── Bookmark
+ │          │
+ │          └────── Report
+ │
+ └──────────────────────────────
+```
+
+모든 Story는 하나의 User가 생성한다.
+
+하나의 Story는 여러 Chapter를 가진다.
+
+하나의 Chapter는 여러 Choice를 가진다.
+
+---
+
+# 107. User Table
+
+사용자 정보를 저장한다.
+
+주요 컬럼
+
+| 컬럼 | 설명 |
+|------|------|
+| id | PK |
+| email | 로그인 이메일 |
+| password | 암호화된 비밀번호 |
+| nickname | 닉네임 |
+| role | USER / ADMIN |
+| created_at | 생성일 |
+| updated_at | 수정일 |
+
+이메일은 UNIQUE 제약조건을 적용한다.
+
+---
+
+# 108. Story Table
+
+Story 기본 정보를 저장한다.
+
+주요 컬럼
+
+| 컬럼 | 설명 |
+|------|------|
+| id | PK |
+| user_id | 작성자 |
+| title | 제목 |
+| genre | 장르 |
+| world | 세계관 |
+| protagonist_name | 주인공 이름 |
+| protagonist_description | 주인공 설명 |
+| status | 진행 상태 |
+| created_at | 생성일 |
+| updated_at | 수정일 |
+
+Story 설정 정보는 AI Prompt 생성에도 사용된다.
+
+---
+
+# 109. Chapter Table
+
+각 Chapter를 저장한다.
+
+주요 컬럼
+
+| 컬럼 | 설명 |
+|------|------|
+| id | PK |
+| story_id | Story |
+| chapter_number | Chapter 번호 |
+| title | Chapter 제목 |
+| content | Chapter 내용 |
+| created_at | 생성일 |
+
+Story 하나에는 여러 Chapter가 존재한다.
+
+---
+
+# 110. Choice Table
+
+사용자가 선택할 수 있는 선택지를 저장한다.
+
+주요 컬럼
+
+| 컬럼 | 설명 |
+|------|------|
+| id | PK |
+| chapter_id | Chapter |
+| choice_order | 표시 순서 |
+| content | 선택지 내용 |
+
+MVP에서는 선택지 개수를 3개로 고정한다.
+
+---
+
+# 111. Bookmark Table
+
+사용자의 북마크를 저장한다.
+
+주요 컬럼
+
+| 컬럼 | 설명 |
+|------|------|
+| id | PK |
+| user_id | 사용자 |
+| story_id | Story |
+| created_at | 생성일 |
+
+동일 Story를 여러 번 북마크하지 못하도록 UNIQUE 제약조건을 적용한다.
+
+---
+
+# 112. Report Table
+
+신고 정보를 저장한다.
+
+주요 컬럼
+
+| 컬럼 | 설명 |
+|------|------|
+| id | PK |
+| user_id | 신고자 |
+| story_id | 신고 대상 |
+| reason | 신고 사유 |
+| created_at | 신고일 |
+
+동일 사용자의 중복 신고는 제한할 수 있다.
+
+---
+
+# 113. Relationship
+
+테이블 관계는 다음과 같다.
+
+```text
+User (1)
+    │
+    └────── Story (N)
+                  │
+                  └────── Chapter (N)
+                                │
+                                └────── Choice (N)
+
+User (1)
+    └────── Bookmark (N)
+
+Story (1)
+    └────── Bookmark (N)
+
+User (1)
+    └────── Report (N)
+
+Story (1)
+    └────── Report (N)
+```
+
+---
+
+# 114. Primary Key Strategy
+
+모든 테이블은 Long 타입의 Auto Increment Primary Key를 사용한다.
+
+```java
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+private Long id;
+```
+
+UUID는 MVP에서 사용하지 않는다.
+
+---
+
+# 115. Foreign Key Strategy
+
+외래키를 사용하여 데이터 무결성을 유지한다.
+
+예시
+
+```text
+stories.user_id
+
+chapters.story_id
+
+choices.chapter_id
+
+bookmarks.user_id
+
+bookmarks.story_id
+
+reports.user_id
+
+reports.story_id
+```
+
+삭제 정책은 서비스 요구사항에 따라 설정한다.
+
+---
+
+# 116. Index Strategy
+
+조회 성능을 위해 필요한 컬럼에 인덱스를 적용한다.
+
+권장 인덱스
+
+| 컬럼 | 목적 |
+|------|------|
+| users.email | 로그인 |
+| stories.user_id | 내 Story 조회 |
+| chapters.story_id | Chapter 조회 |
+| choices.chapter_id | 선택지 조회 |
+| bookmarks.user_id | 북마크 조회 |
+| reports.story_id | 신고 조회 |
+
+불필요한 인덱스는 추가하지 않는다.
+
+---
+
+# 117. Unique Constraints
+
+중복 저장을 방지하기 위해 UNIQUE 제약조건을 적용한다.
+
+예시
+
+```text
+users.email
+
+bookmarks(user_id, story_id)
+```
+
+필요한 경우 신고에도 복합 UNIQUE를 적용할 수 있다.
+
+---
+
+# 118. Cascade Strategy
+
+Story 삭제 시 관련 데이터도 함께 삭제한다.
+
+```text
+Story 삭제
+
+↓
+
+Chapter 삭제
+
+↓
+
+Choice 삭제
+```
+
+Bookmark와 Report도 함께 삭제한다.
+
+Cascade는 필요한 관계에만 적용한다.
+
+---
+
+# 119. Naming Convention
+
+테이블
+
+```text
+users
+
+stories
+
+chapters
+
+choices
+
+bookmarks
+
+reports
+```
+
+컬럼
+
+```text
+created_at
+
+updated_at
+
+user_id
+
+story_id
+
+chapter_id
+```
+
+snake_case를 사용한다.
+
+---
+
+# 120. Audit Columns
+
+모든 주요 테이블에는 생성일과 수정일을 저장한다.
+
+```text
+created_at
+
+updated_at
+```
+
+Spring Data JPA Auditing을 사용하여 자동 관리한다.
+
+---
+
+# 121. Database Design Principles
+
+StorySeed 데이터베이스는 다음 원칙을 따른다.
+
+1. 정규화를 기본으로 설계한다.
+2. 모든 관계는 외래키를 사용한다.
+3. 필요한 곳에만 인덱스를 추가한다.
+4. 중복 데이터 저장을 최소화한다.
+5. Long Primary Key를 사용한다.
+6. Audit 컬럼을 유지한다.
+7. MVP에서는 단순한 구조를 우선한다.
+
+---
+
+# 122. MVP Scope
+
+MVP에서 구현하는 테이블
+
+- users
+- stories
+- chapters
+- choices
+- bookmarks
+- reports
+
+MVP에서는 다음 테이블을 제외한다.
+
+- prompt_templates
+- ai_logs
+- inventories
+- character_states
+- story_flags
+- user_settings
+- refresh_tokens
+
+---
+
+# 123. Future Expansion
+
+서비스 확장 시 다음 테이블을 추가할 수 있다.
+
+- prompt_templates
+- ai_generation_logs
+- story_flags
+- character_states
+- inventories
+- achievements
+- notifications
+- user_settings
+
+현재는 구현하지 않는다.
+
+---
+
+# 124. Next Section
+
+다음 장에서는 ERD(Entity Relationship Diagram)를 정의한다.
+
+각 테이블의 관계와 컬럼 구성을 시각적으로 정리한다.
+```
+
+
+
