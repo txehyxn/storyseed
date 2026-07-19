@@ -2540,3 +2540,381 @@ MVP 이후 추가 가능한 기능
 
 회원가입부터 Story 생성, AI 생성, Story 진행까지 전체 요청 흐름을 설명한다.
 ```
+
+```md
+# 86. Backend Flow
+
+## 86.1 Overview
+
+Backend Flow는 사용자의 요청이 서버 내부에서 어떻게 처리되는지 정의한다.
+
+StorySeed는 Controller → Service → Repository 구조를 기반으로 요청을 처리하며, AI 생성이 필요한 경우 AIService를 통해 외부 AI API와 통신한다.
+
+모든 요청은 역할이 명확하게 분리된 계층을 거쳐 처리된다.
+
+---
+
+## 86.2 Overall Request Flow
+
+```text
+Browser
+    ↓
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+Database
+
+(필요 시)
+
+Service
+    ↓
+AIService
+    ↓
+AIClient
+    ↓
+AI API
+```
+
+Controller는 요청과 응답만 담당하며, 실제 비즈니스 로직은 Service에서 처리한다.
+
+---
+
+# 87. User Registration Flow
+
+회원가입 처리 과정은 다음과 같다.
+
+```text
+회원가입 요청
+        ↓
+Request DTO 검증
+        ↓
+이메일 중복 확인
+        ↓
+비밀번호 암호화
+        ↓
+User 저장
+        ↓
+회원가입 완료
+```
+
+회원가입 실패 시 저장을 수행하지 않는다.
+
+---
+
+# 88. Login Flow
+
+로그인은 Spring Security가 처리한다.
+
+```text
+로그인 요청
+        ↓
+Spring Security
+        ↓
+User 조회
+        ↓
+비밀번호 검증
+        ↓
+Session 생성
+        ↓
+로그인 완료
+```
+
+로그인 성공 후 인증 정보는 Session에 저장된다.
+
+---
+
+# 89. Story Creation Flow
+
+새로운 Story를 생성하는 과정이다.
+
+```text
+Story 생성 요청
+        ↓
+입력값 검증
+        ↓
+Story 저장
+        ↓
+AIService 호출
+        ↓
+첫 Chapter 생성
+        ↓
+Choice 생성
+        ↓
+DB 저장
+        ↓
+Story 화면 이동
+```
+
+AI 생성 실패 시 Story는 저장하지 않는다.
+
+---
+
+# 90. Story Continue Flow
+
+사용자가 Story를 이어서 진행하는 과정이다.
+
+```text
+Story 조회
+        ↓
+현재 사용자 확인
+        ↓
+최근 Chapter 조회
+        ↓
+Story 화면 출력
+```
+
+본인의 Story만 조회할 수 있다.
+
+---
+
+# 91. Choice Selection Flow
+
+사용자가 선택지를 클릭하면 다음 Chapter를 생성한다.
+
+```text
+선택지 클릭
+        ↓
+Story 소유권 확인
+        ↓
+Choice 조회
+        ↓
+AIService 호출
+        ↓
+다음 Chapter 생성
+        ↓
+Choice 생성
+        ↓
+DB 저장
+        ↓
+다음 화면 출력
+```
+
+---
+
+# 92. Bookmark Flow
+
+북마크 처리 과정이다.
+
+```text
+북마크 요청
+        ↓
+Story 조회
+        ↓
+중복 여부 확인
+        ↓
+Bookmark 저장
+        ↓
+완료
+```
+
+이미 북마크한 Story는 중복 저장하지 않는다.
+
+---
+
+# 93. Report Flow
+
+사용자가 Story를 신고하는 과정이다.
+
+```text
+신고 요청
+        ↓
+Story 조회
+        ↓
+신고 내용 검증
+        ↓
+Report 저장
+        ↓
+완료
+```
+
+동일 사용자의 중복 신고는 제한할 수 있다.
+
+---
+
+# 94. Admin Flow
+
+관리자 기능 처리 과정이다.
+
+```text
+관리자 요청
+        ↓
+ADMIN 권한 확인
+        ↓
+Service 실행
+        ↓
+DB 저장
+        ↓
+응답 반환
+```
+
+권한이 없는 사용자는 접근할 수 없다.
+
+---
+
+# 95. Exception Flow
+
+예외 발생 시 처리 과정이다.
+
+```text
+Controller
+        ↓
+Service
+        ↓
+Exception 발생
+        ↓
+GlobalExceptionHandler
+        ↓
+ErrorResponse 반환
+```
+
+모든 예외는 공통 Exception Handler에서 처리한다.
+
+---
+
+# 96. Transaction Flow
+
+데이터 저장 과정은 하나의 Transaction으로 처리한다.
+
+```text
+Transaction 시작
+        ↓
+데이터 저장
+        ↓
+AI 결과 저장
+        ↓
+Commit
+```
+
+오류 발생 시
+
+```text
+Transaction 시작
+        ↓
+오류 발생
+        ↓
+Rollback
+```
+
+불완전한 데이터가 저장되지 않도록 한다.
+
+---
+
+# 97. Validation Flow
+
+사용자의 입력은 저장 전에 검증한다.
+
+검증 항목
+
+- 필수값
+- 문자열 길이
+- 이메일 형식
+- 중복 여부
+- 권한 확인
+
+검증 실패 시 저장하지 않는다.
+
+---
+
+# 98. Authorization Flow
+
+로그인 사용자의 권한을 확인한다.
+
+```text
+Request
+    ↓
+Session 확인
+    ↓
+Role 확인
+    ↓
+요청 처리
+```
+
+Story 조회 시에는 소유권도 함께 확인한다.
+
+---
+
+# 99. AI Generation Flow
+
+AI 생성 과정은 다음과 같다.
+
+```text
+StoryService
+        ↓
+AIService
+        ↓
+PromptBuilder
+        ↓
+AIClient
+        ↓
+AI API
+        ↓
+응답 검증
+        ↓
+Chapter 저장
+```
+
+AI 관련 로직은 AIService에서만 처리한다.
+
+---
+
+# 100. Backend Design Principles
+
+StorySeed Backend는 다음 원칙을 따른다.
+
+1. Controller는 요청과 응답만 담당한다.
+2. 비즈니스 로직은 Service에서 처리한다.
+3. Repository는 데이터 접근만 담당한다.
+4. AI 호출은 AIService에서 처리한다.
+5. 모든 예외는 GlobalExceptionHandler에서 처리한다.
+6. Transaction을 사용하여 데이터 정합성을 유지한다.
+7. 사용자의 권한과 Story 소유권을 항상 확인한다.
+
+---
+
+# 101. MVP Scope
+
+MVP에서 구현하는 Backend Flow
+
+- 회원가입
+- 로그인
+- Story 생성
+- Story 조회
+- Story 이어하기
+- AI Chapter 생성
+- 선택지 생성
+- 북마크
+- 신고
+- 관리자 기능
+- 예외 처리
+- 권한 관리
+- Transaction 처리
+
+---
+
+# 102. Future Expansion
+
+MVP 이후 확장 가능한 기능
+
+- 비동기 AI 생성
+- 메시지 큐
+- Redis 캐시
+- 이벤트 기반 처리
+- 실시간 알림
+- 분산 Transaction
+- AI 작업 큐
+- 서버 모니터링
+
+현재는 단일 서버 환경을 기준으로 구현한다.
+
+---
+
+# 103. Next Section
+
+다음 장에서는 Database Design을 정의한다.
+
+ERD와 테이블 관계, 컬럼 설계, 인덱스 전략을 설명한다.
+```
+
