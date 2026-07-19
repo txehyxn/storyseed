@@ -2758,19 +2758,11 @@ dragon_friend
 다음 데이터를 추가할 수 있다.
 
 ```
-gold
-
-hp
-
-mp
-
-relationship
-
-quest
-
-achievement
-
-ending_score
+- 관계 변화
+- 감정 변화
+- Story Item 획득
+- StoryFlag 생성
+- 다음 전개 힌트
 ```
 
 ---
@@ -3521,7 +3513,7 @@ User 탈퇴 시 Bookmark를 함께 삭제한다.
 
 # 27. Next Section
 
-다음 장에서는 StorySeed의 **Game State Layer**를 정의한다.
+다음 장에서는 StorySeed의 **Narrative State Layer**를 정의한다.
 
 여기서는 다음 테이블을 설계한다.
 
@@ -3762,3 +3754,265 @@ StoryFlag
 Story Item은 전투 장비가 아니라,
 
 이야기의 흐름을 변화시키는 중요한 물건과 단서를 관리하기 위한 구조이다.
+
+# 31. items
+
+## 31.1 Overview
+
+items 테이블은 StorySeed에서 이야기의 흐름에 영향을 주는 Story Item을 관리한다.
+
+Story Item은 일반적인 게임의 장비나 소비 아이템이 아니다.
+
+이야기 속에서 등장하는 중요한 물건, 단서, 증거, 유물 등을 저장하며, AI가 이후 전개를 생성할 때 참고하는 핵심 데이터이다.
+
+예를 들어
+
+- 오래된 열쇠
+- 왕의 편지
+- 용의 비늘
+- 신비한 반지
+- 낡은 지도
+
+등이 Story Item이 될 수 있다.
+
+---
+
+## 31.2 Responsibilities
+
+Item은 다음 정보를 관리한다.
+
+- 아이템 이름
+- 아이템 설명
+- 아이템 종류
+- AI가 참고할 수 있는 서사 정보
+
+---
+
+## 31.3 Table
+
+```
+items
+```
+
+---
+
+## 31.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | Item PK |
+| name | VARCHAR(100) | NO | | 아이템 이름 |
+| description | TEXT | YES | | 아이템 설명 |
+| category | VARCHAR(50) | YES | | 아이템 분류 |
+| created_at | DATETIME | NO | | 생성일 |
+| updated_at | DATETIME | NO | | 수정일 |
+
+---
+
+## 31.5 Example
+
+| Name | Category |
+|------|----------|
+| 오래된 열쇠 | Key |
+| 왕의 편지 | Document |
+| 용의 비늘 | Material |
+| 붉은 장미 | Gift |
+| 낡은 지도 | Map |
+
+---
+
+## 31.6 Business Rules
+
+Story Item은 여러 Story에서 재사용할 수 있다.
+
+Story Item 자체는 변하지 않는다.
+
+실제 사용자의 보유 여부는 inventories 테이블에서 관리한다.
+
+---
+
+## 31.7 Relationship
+
+Item
+
+↓
+
+Inventory
+
+```
+1:N
+```
+
+---
+
+## 31.8 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | items |
+| Parent | 없음 |
+| Child | inventories |
+| Audit | BaseEntity |
+
+---
+
+# 32. inventories
+
+## 32.1 Overview
+
+inventories 테이블은 사용자가 특정 Story에서 획득한 Story Item을 관리한다.
+
+Item은 마스터 데이터이며,
+
+Inventory는
+
+"누가"
+
+"어떤 Story에서"
+
+"어떤 Item을"
+
+획득했는지를 저장한다.
+
+---
+
+## 32.2 Responsibilities
+
+Inventory는 다음 정보를 관리한다.
+
+- Story
+- 사용자
+- 획득한 Item
+- 획득 시점
+
+---
+
+## 32.3 Table
+
+```
+inventories
+```
+
+---
+
+## 32.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | Inventory PK |
+| story_id | BIGINT | NO | FK | Story |
+| user_id | BIGINT | NO | FK | User |
+| item_id | BIGINT | NO | FK | Item |
+| acquired_at | DATETIME | NO | | 획득 시간 |
+
+---
+
+## 32.5 Example
+
+| Story | User | Item |
+|-------|------|------|
+| 숲속의 모험 | Alice | 오래된 열쇠 |
+| 숲속의 모험 | Alice | 왕의 편지 |
+| 드래곤 전설 | Bob | 용의 비늘 |
+
+---
+
+## 32.6 Business Rules
+
+동일 Story에서는 같은 Item을 중복 획득할 수 없다.
+
+Story 종료 후에도 Inventory는 해당 Story 기록으로 유지된다.
+
+AI는 Inventory를 참고하여 이후 선택지와 이야기를 생성한다.
+
+---
+
+## 32.7 Constraints
+
+Primary Key
+
+```
+PK_inventories
+```
+
+Foreign Key
+
+```
+story_id
+
+↓
+
+stories.id
+```
+
+```
+user_id
+
+↓
+
+users.id
+```
+
+```
+item_id
+
+↓
+
+items.id
+```
+
+Unique
+
+```
+(story_id, item_id)
+```
+
+---
+
+## 32.8 Relationship
+
+Story
+
+↓
+
+Inventory
+
+```
+1:N
+```
+
+---
+
+User
+
+↓
+
+Inventory
+
+```
+1:N
+```
+
+---
+
+Item
+
+↓
+
+Inventory
+
+```
+1:N
+```
+
+---
+
+## 32.9 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | inventories |
+| Parent | stories, users, items |
+| Child | 없음 |
+| Cascade | REMOVE |
+| Audit | acquired_at |
