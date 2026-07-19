@@ -1600,3 +1600,248 @@ Controller
 다음 장에서는 Exception Handling 전략을 정의한다.
 
 GlobalExceptionHandler를 통해 예외를 일관된 형식으로 처리하고, 사용자에게 명확한 오류 메시지를 제공하는 방법을 설명한다.
+
+# 38. Exception Handling
+
+## 38.1 Overview
+
+StorySeed는 모든 예외를 일관된 형식으로 처리하기 위해 Global Exception Handler를 사용한다.
+
+Controller마다 try-catch를 작성하지 않고, 발생한 예외는 GlobalExceptionHandler에서 처리한다.
+
+이를 통해
+
+- 일관된 API 응답
+- 유지보수성 향상
+- 코드 중복 제거
+- 명확한 오류 메시지 제공
+
+을 목표로 한다.
+
+---
+
+## 38.2 Exception Structure
+
+```
+exception
+
+├── GlobalExceptionHandler
+├── ErrorResponse
+├── ErrorCode
+│
+├── UserNotFoundException
+├── StoryNotFoundException
+├── ChapterNotFoundException
+├── ChoiceNotFoundException
+├── BookmarkAlreadyExistsException
+├── InvalidChoiceException
+└── UnauthorizedException
+```
+
+MVP에서는 필요한 예외만 정의한다.
+
+---
+
+# 39. Error Response Format
+
+모든 API는 오류 발생 시 동일한 형식으로 응답한다.
+
+예시
+
+```json
+{
+  "timestamp": "2026-07-19T20:30:00",
+  "status": 404,
+  "error": "NOT_FOUND",
+  "message": "Story를 찾을 수 없습니다.",
+  "path": "/api/stories/1"
+}
+```
+
+응답 형식을 통일하여 프론트엔드에서 쉽게 처리할 수 있도록 한다.
+
+---
+
+# 40. GlobalExceptionHandler
+
+모든 예외는 GlobalExceptionHandler에서 처리한다.
+
+예시
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(StoryNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleStoryNotFound(
+            StoryNotFoundException e) {
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(
+                        HttpStatus.NOT_FOUND,
+                        e.getMessage()));
+    }
+
+}
+```
+
+Controller에서는 개별 try-catch를 작성하지 않는다.
+
+---
+
+# 41. Custom Exception
+
+비즈니스 로직에서 발생하는 예외는 Custom Exception으로 정의한다.
+
+예시
+
+```java
+public class StoryNotFoundException
+        extends RuntimeException {
+
+    public StoryNotFoundException() {
+        super("Story를 찾을 수 없습니다.");
+    }
+
+}
+```
+
+Service 계층에서 필요한 시점에 발생시킨다.
+
+---
+
+# 42. Validation Exception
+
+DTO Validation 실패는 자동으로 처리한다.
+
+예시
+
+```java
+@NotBlank
+private String title;
+```
+
+Validation 실패 시
+
+```
+MethodArgumentNotValidException
+```
+
+이 발생하며 GlobalExceptionHandler에서 처리한다.
+
+---
+
+# 43. Common Exception Cases
+
+StorySeed에서 자주 발생하는 예외는 다음과 같다.
+
+| Exception | 설명 |
+|------------|------|
+| UserNotFoundException | 회원이 존재하지 않음 |
+| StoryNotFoundException | Story가 존재하지 않음 |
+| ChapterNotFoundException | Chapter가 존재하지 않음 |
+| ChoiceNotFoundException | Choice가 존재하지 않음 |
+| BookmarkAlreadyExistsException | 이미 북마크한 Story |
+| InvalidChoiceException | 잘못된 선택 |
+| UnauthorizedException | 인증 실패 |
+
+필요한 경우 프로젝트 진행 중 추가한다.
+
+---
+
+# 44. Error Code Strategy
+
+ErrorCode Enum을 사용하여 오류를 관리한다.
+
+예시
+
+```java
+public enum ErrorCode {
+
+    USER_NOT_FOUND,
+
+    STORY_NOT_FOUND,
+
+    CHAPTER_NOT_FOUND,
+
+    INVALID_CHOICE,
+
+    BOOKMARK_ALREADY_EXISTS,
+
+    INTERNAL_SERVER_ERROR
+
+}
+```
+
+서비스 규모가 커져도 오류를 일관되게 관리할 수 있다.
+
+---
+
+# 45. Design Principles
+
+StorySeed는 다음 원칙을 따른다.
+
+### Principle 1
+
+Controller에서는 try-catch를 사용하지 않는다.
+
+---
+
+### Principle 2
+
+모든 예외는 RuntimeException 기반으로 작성한다.
+
+---
+
+### Principle 3
+
+비즈니스 예외는 Custom Exception으로 관리한다.
+
+---
+
+### Principle 4
+
+예외 메시지는 사용자에게 이해하기 쉽게 작성한다.
+
+---
+
+### Principle 5
+
+오류 응답 형식은 모든 API에서 동일하게 유지한다.
+
+---
+
+# 46. MVP Scope
+
+현재 구현하는 예외
+
+- UserNotFoundException
+- StoryNotFoundException
+- ChapterNotFoundException
+- ChoiceNotFoundException
+- BookmarkAlreadyExistsException
+- GlobalExceptionHandler
+- ErrorResponse
+
+프로젝트 진행에 따라 필요한 예외를 추가한다.
+
+---
+
+# 47. Future Expansion
+
+향후 프로젝트가 확장되면 다음 기능을 검토한다.
+
+- ErrorCode 세분화
+- 국제화(i18n) 오류 메시지
+- 로그 추적 ID(Request ID)
+- API 오류 문서 자동화
+
+현재 MVP에서는 적용하지 않는다.
+
+---
+
+# 48. Next Section
+
+다음 장에서는 Backend 보안(Security) 구조를 정의한다.
+
+JWT 인증, Spring Security 설정, 권한(Role) 관리 및 인증 흐름을 설명한다.
