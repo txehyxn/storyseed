@@ -2165,3 +2165,378 @@ StorySeed는 다음 원칙을 따른다.
 다음 장에서는 AI Service Layer를 설명한다.
 
 AI 요청부터 Chapter 생성, 선택지 생성, 데이터 저장까지의 전체 흐름을 정의한다.
+```md
+# 67. AI Service Layer
+
+## 67.1 Overview
+
+AI Service Layer는 StorySeed의 핵심 기능인 AI 기반 이야기 생성을 담당한다.
+
+사용자가 입력한 이야기 설정과 현재까지의 진행 내용을 기반으로 AI API를 호출하여 새로운 Chapter와 선택지를 생성한다.
+
+AI 관련 로직은 Controller나 Service에 직접 작성하지 않고 AIService를 통해 관리한다.
+
+---
+
+## 67.2 Goals
+
+AI Service Layer의 주요 목적은 다음과 같다.
+
+- 첫 번째 Chapter 생성
+- 다음 Chapter 생성
+- 선택지 생성
+- Prompt 생성
+- AI 응답 검증
+- AI 호출 실패 처리
+
+MVP에서는 하나의 AI 모델만 사용한다.
+
+---
+
+# 68. Package Structure
+
+```text
+ai
+
+├── AIService
+├── AIClient
+└── PromptBuilder
+```
+
+MVP에서는 최소한의 구조만 유지한다.
+
+필요한 기능이 증가하면 DTO, Exception 등을 추가한다.
+
+---
+
+# 69. Responsibilities
+
+## AIService
+
+AI 생성 과정을 관리한다.
+
+주요 역할
+
+- Prompt 생성 요청
+- AIClient 호출
+- 응답 검증
+- 생성 결과 반환
+
+---
+
+## AIClient
+
+외부 AI API와 통신한다.
+
+주요 역할
+
+- API 요청
+- 응답 수신
+- 예외 처리
+
+---
+
+## PromptBuilder
+
+AI에게 전달할 Prompt를 생성한다.
+
+포함 정보
+
+- Story 설정
+- 이전 Chapter
+- 사용자 선택
+- 생성 규칙
+
+---
+
+# 70. AI Generation Flow
+
+```text
+사용자 요청
+        ↓
+StoryController
+        ↓
+StoryService
+        ↓
+AIService
+        ↓
+PromptBuilder
+        ↓
+AIClient
+        ↓
+AI API
+        ↓
+응답 검증
+        ↓
+Chapter 저장
+        ↓
+Choice 저장
+        ↓
+사용자 화면 반환
+```
+
+---
+
+# 71. First Chapter Generation
+
+Story 생성 시 AI가 첫 Chapter를 생성한다.
+
+입력 정보
+
+- 제목
+- 장르
+- 세계관
+- 주인공
+- 주인공 특징
+- 시작 설정
+
+생성 과정
+
+```text
+Story 저장
+        ↓
+Prompt 생성
+        ↓
+AI 호출
+        ↓
+Chapter 생성
+        ↓
+Choice 생성
+        ↓
+DB 저장
+```
+
+AI 생성 실패 시 Story는 저장하지 않고 생성을 취소한다.
+
+---
+
+# 72. Next Chapter Generation
+
+사용자가 선택지를 선택하면 다음 Chapter를 생성한다.
+
+AI에 전달하는 정보
+
+- Story 설정
+- 최근 Chapter
+- 사용자 선택
+- 현재 진행 정보
+
+생성 과정
+
+```text
+선택지 클릭
+        ↓
+Prompt 생성
+        ↓
+AI 호출
+        ↓
+Chapter 생성
+        ↓
+Choice 생성
+        ↓
+DB 저장
+```
+
+---
+
+# 73. Prompt Strategy
+
+Prompt에는 다음 정보를 포함한다.
+
+- Story 설정
+- 이전 이야기
+- 사용자 선택
+- 생성 규칙
+
+예시
+
+```text
+당신은 인터랙티브 소설 작가입니다.
+
+다음 정보를 기반으로 새로운 Chapter를 작성하세요.
+
+- 기존 설정을 유지합니다.
+- 사용자의 선택을 반영합니다.
+- 3개의 선택지를 생성합니다.
+- JSON 형식으로 응답합니다.
+```
+
+---
+
+# 74. AI Response Format
+
+AI 응답은 JSON 형식으로 받는다.
+
+```json
+{
+  "title": "추격자의 흔적",
+  "content": "...",
+  "choices": [
+    {
+      "text": "근위대를 따라간다."
+    },
+    {
+      "text": "골목을 조사한다."
+    },
+    {
+      "text": "왕궁으로 돌아간다."
+    }
+  ]
+}
+```
+
+---
+
+# 75. Response Validation
+
+저장 전 다음 항목을 검증한다.
+
+- 제목 존재 여부
+- 본문 존재 여부
+- 선택지 존재 여부
+- 선택지 2개 이상
+- 빈 문자열 여부
+
+검증 실패 시 저장하지 않는다.
+
+---
+
+# 76. AIService Flow
+
+```text
+Prompt 생성
+        ↓
+AI 호출
+        ↓
+응답 검증
+        ↓
+Chapter 반환
+```
+
+AIService는 데이터 저장을 담당하지 않는다.
+
+StoryService가 저장을 수행한다.
+
+---
+
+# 77. API Key Management
+
+API Key는 코드에 작성하지 않는다.
+
+예시
+
+```yaml
+ai:
+  api-key: ${AI_API_KEY}
+  model: ${AI_MODEL}
+```
+
+민감한 정보는 GitHub에 업로드하지 않는다.
+
+---
+
+# 78. Duplicate Request Prevention
+
+AI 생성 중에는 중복 요청을 방지한다.
+
+적용 내용
+
+- 버튼 비활성화
+- 로딩 화면 표시
+- 서버 중복 요청 검사
+
+---
+
+# 79. Error Handling
+
+다음 오류를 처리한다.
+
+- API 연결 실패
+- Timeout
+- JSON 변환 실패
+- 빈 응답
+- 선택지 누락
+
+사용자에게는 간단한 오류 메시지를 제공한다.
+
+```text
+이야기를 생성하는 중 문제가 발생했습니다.
+
+잠시 후 다시 시도해 주세요.
+```
+
+---
+
+# 80. Story Context Strategy
+
+MVP에서는 다음 정보만 AI에게 전달한다.
+
+- Story 설정
+- 최근 Chapter
+- 사용자 선택
+
+Story 전체를 매번 전달하지 않는다.
+
+---
+
+# 81. Content Length
+
+권장 길이
+
+- 제목 : 50자 이하
+- 본문 : 500~1000자
+- 선택지 : 3개
+
+---
+
+# 82. Design Principles
+
+StorySeed AI는 다음 원칙을 따른다.
+
+1. Controller는 AI API를 직접 호출하지 않는다.
+2. AI 통신은 AIClient가 담당한다.
+3. Prompt 생성은 PromptBuilder가 담당한다.
+4. AI 응답은 반드시 검증한다.
+5. API Key는 외부 설정으로 관리한다.
+6. 실패한 응답은 저장하지 않는다.
+7. MVP에서는 하나의 AI 모델만 사용한다.
+
+---
+
+# 83. MVP Scope
+
+MVP에서 구현하는 기능
+
+- AI API 연동
+- 첫 Chapter 생성
+- 다음 Chapter 생성
+- 선택지 생성
+- PromptBuilder
+- AIClient
+- 응답 검증
+- 오류 처리
+- 로딩 화면
+- 중복 요청 방지
+
+---
+
+# 84. Future Expansion
+
+MVP 이후 추가 가능한 기능
+
+- Story 요약
+- 긴 문맥 관리
+- Prompt 관리
+- AI 모델 변경
+- 이미지 생성
+- AI 사용량 통계
+- 비동기 생성
+
+---
+
+# 85. Next Section
+
+다음 장에서는 Backend Flow를 정의한다.
+
+회원가입부터 Story 생성, AI 생성, Story 진행까지 전체 요청 흐름을 설명한다.
+```
