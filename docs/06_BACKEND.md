@@ -3342,5 +3342,187 @@ MVP에서는 다음 테이블을 제외한다.
 각 테이블의 관계와 컬럼 구성을 시각적으로 정리한다.
 ```
 
+# 125. Entity Design
 
+## 125.1 Overview
 
+StorySeed의 Entity는 데이터베이스 테이블과 1:1로 매핑된다.
+
+Entity는 데이터 저장과 최소한의 도메인 로직만 담당하며, API 요청이나 응답에 직접 사용하지 않는다.
+
+모든 Entity는 Spring Data JPA를 사용하여 관리한다.
+
+---
+
+# 126. Common Entity Structure
+
+모든 Entity는 공통적으로 다음 필드를 가진다.
+
+```java
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+private Long id;
+
+@CreatedDate
+private LocalDateTime createdAt;
+
+@LastModifiedDate
+private LocalDateTime updatedAt;
+```
+
+생성일과 수정일은 Spring Data JPA Auditing을 이용하여 자동 관리한다.
+
+---
+
+# 127. Entity Relationship Strategy
+
+StorySeed는 단방향 연관관계를 우선으로 설계한다.
+
+필요한 경우에만 양방향 연관관계를 사용하여 순환 참조와 불필요한 의존성을 최소화한다.
+
+기본 관계 구조는 다음과 같다.
+
+```text
+Story
+    ↓
+Chapter
+    ↓
+Choice
+```
+
+---
+
+# 128. Fetch Strategy
+
+모든 연관관계는 기본적으로 LAZY Loading을 사용한다.
+
+적용 원칙
+
+- @ManyToOne → FetchType.LAZY
+- @OneToMany → FetchType.LAZY
+
+즉시 조회(EAGER)는 사용하지 않는다.
+
+필요한 경우 Fetch Join 또는 EntityGraph를 사용하여 조회 성능을 최적화한다.
+
+---
+
+# 129. Cascade Strategy
+
+Cascade는 필요한 관계에서만 사용한다.
+
+적용 예시
+
+```text
+Story
+    ↓
+Chapter
+    ↓
+Choice
+```
+
+Story 삭제 시 Chapter와 Choice도 함께 삭제한다.
+
+Bookmark와 Report는 서비스 정책에 따라 별도로 처리한다.
+
+---
+
+# 130. Orphan Removal
+
+Story와 Chapter 관계에서는 orphanRemoval을 사용할 수 있다.
+
+```java
+@OneToMany(
+    mappedBy = "story",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true
+)
+```
+
+부모 Entity에서 제거된 자식 데이터가 자동 삭제되도록 관리한다.
+
+---
+
+# 131. Soft Delete Strategy
+
+MVP에서는 Hard Delete를 사용한다.
+
+서비스 규모가 커질 경우 Soft Delete를 검토한다.
+
+예시 컬럼
+
+```text
+deleted_at
+
+is_deleted
+```
+
+현재 MVP에서는 적용하지 않는다.
+
+---
+
+# 132. Database Performance Strategy
+
+조회 성능 향상을 위해 다음 사항을 적용한다.
+
+- Pagination 사용
+- Index 활용
+- Fetch Join 활용
+- N+1 문제 방지
+- 필요한 컬럼만 조회
+
+불필요한 JOIN과 전체 조회는 지양한다.
+
+---
+
+# 133. Database Design Principles
+
+StorySeed Database는 다음 원칙을 따른다.
+
+1. 정규화를 기본으로 설계한다.
+2. Long 타입 Primary Key를 사용한다.
+3. 외래키를 통해 데이터 무결성을 유지한다.
+4. FetchType.LAZY를 기본으로 사용한다.
+5. 단방향 연관관계를 우선 적용한다.
+6. Audit 컬럼을 모든 주요 테이블에 포함한다.
+7. Cascade는 필요한 경우에만 적용한다.
+
+---
+
+# 134. MVP Scope
+
+현재 MVP에서 적용하는 데이터베이스 정책
+
+- MySQL
+- Spring Data JPA
+- Long Primary Key
+- LAZY Loading
+- Hard Delete
+- Foreign Key
+- Index
+- Audit
+
+---
+
+# 135. Future Expansion
+
+서비스 확장 시 다음 기능을 추가할 수 있다.
+
+- Soft Delete
+- Read Replica
+- Database Partition
+- Database Sharding
+- Redis Cache
+- Elasticsearch
+- QueryDSL
+- EntityGraph
+
+현재 MVP에서는 적용하지 않는다.
+
+---
+
+# 136. Next Section
+
+다음 장에서는 StorySeed의 ERD(Entity Relationship Diagram)를 정의한다.
+
+ERD를 통해 전체 테이블 구조와 관계를 시각적으로 설명한다.
