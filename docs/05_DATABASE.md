@@ -4016,3 +4016,371 @@ Inventory
 | Child | 없음 |
 | Cascade | REMOVE |
 | Audit | acquired_at |
+
+# 33. ending_reports
+
+## 33.1 Overview
+
+ending_reports 테이블은 하나의 Story가 종료되었을 때 생성되는 최종 분석 결과를 저장한다.
+
+단순히 엔딩 텍스트를 저장하는 것이 아니라,
+
+AI가 이야기 전체를 분석하여 생성한 요약, 플레이 스타일, 주요 선택, 결말 평가 등을 관리한다.
+
+사용자는 Story 종료 후 자신의 이야기를 다시 돌아볼 수 있으며,
+
+향후 AI 추천 시스템의 데이터로도 활용할 수 있다.
+
+---
+
+## 33.2 Responsibilities
+
+EndingReport는 다음 정보를 관리한다.
+
+- 전체 이야기 요약
+- 최종 엔딩
+- 주요 선택
+- 플레이 성향
+- AI 분석 결과
+
+---
+
+## 33.3 Table
+
+```
+ending_reports
+```
+
+---
+
+## 33.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | Report PK |
+| story_id | BIGINT | NO | FK | Story |
+| ending_title | VARCHAR(200) | NO | | 엔딩 제목 |
+| summary | LONGTEXT | NO | | 이야기 전체 요약 |
+| ending_description | LONGTEXT | NO | | 엔딩 설명 |
+| player_profile | TEXT | YES | | 플레이 성향 분석 |
+| ai_comment | TEXT | YES | | AI 코멘트 |
+| created_at | DATETIME | NO | | 생성일 |
+
+---
+
+## 33.5 Example
+
+엔딩 제목
+
+```
+용과 함께한 수호자
+```
+
+플레이 성향
+
+```
+신중한 선택을 선호하며,
+
+갈등보다 대화를 통해 문제를 해결하는 경향이 있습니다.
+```
+
+---
+
+## 33.6 Business Rules
+
+Story 종료 시 EndingReport를 생성한다.
+
+Story 하나에는 하나의 EndingReport만 존재한다.
+
+EndingReport는 생성 이후 수정하지 않는다.
+
+---
+
+## 33.7 Relationship
+
+Story
+
+↓
+
+EndingReport
+
+```
+1:1
+```
+
+---
+
+## 33.8 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | ending_reports |
+| Parent | stories |
+| Child | 없음 |
+| Cascade | ALL |
+
+---
+
+# 34. user_settings
+
+## 34.1 Overview
+
+user_settings 테이블은 사용자의 기본 환경설정을 저장한다.
+
+이 설정은 Story 생성 시 기본값으로 사용되며,
+
+사용자가 원하는 AI 생성 스타일을 유지하기 위해 활용된다.
+
+---
+
+## 34.2 Responsibilities
+
+UserSetting은 다음 정보를 관리한다.
+
+- 기본 언어
+- 기본 장르
+- AI 생성 스타일
+- 기본 공개 범위
+
+---
+
+## 34.3 Table
+
+```
+user_settings
+```
+
+---
+
+## 34.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | PK |
+| user_id | BIGINT | NO | FK | User |
+| default_language | VARCHAR(10) | NO | | 기본 언어 |
+| default_visibility | ENUM | NO | | 공개 범위 |
+| preferred_ai_model | VARCHAR(100) | YES | | 기본 AI 모델 |
+| created_at | DATETIME | NO | | 생성일 |
+| updated_at | DATETIME | NO | | 수정일 |
+
+---
+
+## 34.5 Business Rules
+
+User당 하나의 UserSetting만 존재한다.
+
+회원가입 시 기본 설정을 생성한다.
+
+---
+
+## 34.6 Relationship
+
+User
+
+↓
+
+UserSetting
+
+```
+1:1
+```
+
+---
+
+## 34.7 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | user_settings |
+| Parent | users |
+| Child | 없음 |
+
+---
+
+# 35. refresh_tokens
+
+## 35.1 Overview
+
+refresh_tokens 테이블은 JWT Refresh Token을 저장한다.
+
+Access Token은 저장하지 않으며,
+
+Refresh Token만 관리하여 재발급 기능을 제공한다.
+
+---
+
+## 35.2 Responsibilities
+
+RefreshToken은 다음 정보를 관리한다.
+
+- Refresh Token
+- 만료 시간
+- 사용자
+- 발급 시각
+
+---
+
+## 35.3 Table
+
+```
+refresh_tokens
+```
+
+---
+
+## 35.4 Columns
+
+| Column | Type | Null | Key | Description |
+|---------|------|------|-----|-------------|
+| id | BIGINT | NO | PK | PK |
+| user_id | BIGINT | NO | FK | User |
+| token | VARCHAR(500) | NO | | Refresh Token |
+| expires_at | DATETIME | NO | | 만료 시간 |
+| created_at | DATETIME | NO | | 생성일 |
+
+---
+
+## 35.5 Business Rules
+
+Refresh Token은 사용자별 여러 개를 허용한다.
+
+로그아웃 시 해당 Token만 삭제한다.
+
+만료된 Token은 주기적으로 삭제한다.
+
+---
+
+## 35.6 Relationship
+
+User
+
+↓
+
+RefreshToken
+
+```
+1:N
+```
+
+---
+
+## 35.7 Entity Summary
+
+| Item | Value |
+|------|------|
+| Table | refresh_tokens |
+| Parent | users |
+| Child | 없음 |
+
+---
+
+# 36. genres
+
+## 36.1 Overview
+
+genres 테이블은 Story에서 사용하는 장르 정보를 관리한다.
+
+Fantasy, Romance, Mystery 등 Story 생성 시 사용하는 기준 데이터(Master Data)이다.
+
+---
+
+## 36.2 Table
+
+```
+genres
+```
+
+---
+
+## 36.3 Columns
+
+| Column | Type | Description |
+|---------|------|-------------|
+| id | BIGINT | PK |
+| name | VARCHAR(100) | 장르명 |
+| description | TEXT | 설명 |
+
+---
+
+## 36.4 Example
+
+- Fantasy
+- Romance
+- Mystery
+- Horror
+- Sci-Fi
+- Adventure
+
+---
+
+## 36.5 Relationship
+
+Genre
+
+↓
+
+Story
+
+```
+1:N
+```
+
+---
+
+# 37. worlds
+
+## 37.1 Overview
+
+worlds 테이블은 Story에서 사용하는 세계관 정보를 관리한다.
+
+장르와 별도로 Story의 배경을 정의한다.
+
+---
+
+## 37.2 Table
+
+```
+worlds
+```
+
+---
+
+## 37.3 Columns
+
+| Column | Type | Description |
+|---------|------|-------------|
+| id | BIGINT | PK |
+| name | VARCHAR(100) | 세계관 이름 |
+| description | TEXT | 설명 |
+
+---
+
+## 37.4 Example
+
+- 현대
+- 중세
+- 학교
+- 우주
+- 무협
+- 디스토피아
+
+---
+
+## 37.5 Relationship
+
+World
+
+↓
+
+Story
+
+```
+1:N
+```
+
+---
+
+# 38. Next Section
+
+다음 장에서는 StorySeed Database의 최종 관계도(ERD)와 Cascade 정책, Index 전략을 정리한다.
