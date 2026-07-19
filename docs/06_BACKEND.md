@@ -1087,3 +1087,252 @@ Repository는 데이터 접근만 담당하며,
 - Fetch Join
 
 등의 사용 원칙을 정의한다.
+
+# 20. Repository Design
+
+## 20.1 Overview
+
+Repository는 데이터베이스 접근(Data Access Layer)을 담당한다.
+
+StorySeed에서는 Spring Data JPA를 사용하여 데이터 조회 및 저장을 수행한다.
+
+Repository는 데이터 접근만 담당하며 비즈니스 로직을 포함하지 않는다.
+
+---
+
+## 20.2 Responsibilities
+
+Repository의 역할은 다음과 같다.
+
+- 데이터 저장(Create)
+- 데이터 조회(Read)
+- 데이터 수정(Update)
+- 데이터 삭제(Delete)
+- 조건 검색(Query)
+
+다음 기능은 Repository에서 수행하지 않는다.
+
+- 비즈니스 로직
+- AI 호출
+- 데이터 검증
+- 권한 검사
+
+이러한 로직은 Service 계층에서 처리한다.
+
+---
+
+## 20.3 Repository Package Structure
+
+```
+repository
+
+├── UserRepository
+├── StoryRepository
+├── ChapterRepository
+├── ChoiceRepository
+├── BookmarkRepository
+├── ReportRepository
+├── PromptRepository
+├── RefreshTokenRepository
+└── AIGenerationLogRepository
+```
+
+Entity마다 하나의 Repository를 생성하는 것을 원칙으로 한다.
+
+---
+
+# 21. Repository Design Principles
+
+StorySeed Repository는 다음 원칙을 따른다.
+
+### Principle 1
+
+Repository는 Entity 하나만 담당한다.
+
+---
+
+### Principle 2
+
+Repository는 비즈니스 로직을 포함하지 않는다.
+
+잘못된 예시
+
+```java
+public void createStoryAndCharacter() {
+
+}
+```
+
+올바른 예시
+
+```java
+storyRepository.save(story);
+```
+
+---
+
+### Principle 3
+
+복잡한 로직은 Service에서 조합한다.
+
+예시
+
+```
+Story 저장
+
+↓
+
+Character 저장
+
+↓
+
+Chapter 저장
+```
+
+Repository는 각각 저장만 수행한다.
+
+---
+
+### Principle 4
+
+필요한 데이터만 조회한다.
+
+조회 성능을 고려하여 불필요한 데이터를 함께 가져오지 않는다.
+
+---
+
+# 22. Query Method Strategy
+
+StorySeed는 Spring Data JPA의 Query Method를 우선 사용한다.
+
+예시
+
+```java
+findById()
+
+findByEmail()
+
+findByStoryId()
+
+findAllByUser()
+
+existsByEmail()
+
+existsByNickname()
+
+deleteByStoryId()
+```
+
+조회 조건이 단순한 경우에는 Query Method를 사용한다.
+
+---
+
+# 23. JPQL Usage
+
+복잡한 조회가 필요한 경우에는 JPQL을 사용한다.
+
+예시
+
+- 북마크 목록 조회
+- Story 검색
+- 사용자별 Story 통계
+
+JPQL은 필요한 경우에만 사용한다.
+
+---
+
+# 24. Pagination Strategy
+
+Story 목록 조회는 Pagination을 적용한다.
+
+예시
+
+```java
+Page<Story> findAll(Pageable pageable);
+```
+
+기본 조회는 Page 단위로 수행한다.
+
+---
+
+# 25. Repository Examples
+
+## UserRepository
+
+```java
+public interface UserRepository
+        extends JpaRepository<User, Long> {
+
+    Optional<User> findByEmail(String email);
+
+    boolean existsByEmail(String email);
+
+}
+```
+
+---
+
+## StoryRepository
+
+```java
+public interface StoryRepository
+        extends JpaRepository<Story, Long> {
+
+    Page<Story> findAllByUser(
+            User user,
+            Pageable pageable);
+
+}
+```
+
+---
+
+## BookmarkRepository
+
+```java
+public interface BookmarkRepository
+        extends JpaRepository<Bookmark, Long> {
+
+    boolean existsByUserAndStory(
+            User user,
+            Story story);
+
+}
+```
+
+---
+
+# 26. MVP Scope
+
+현재 프로젝트에서 구현하는 Repository는 다음과 같다.
+
+- UserRepository
+- StoryRepository
+- ChapterRepository
+- ChoiceRepository
+- BookmarkRepository
+- RefreshTokenRepository
+
+AI Log, Prompt, Report 관련 Repository는 기능 구현 시점에 추가한다.
+
+---
+
+# 27. Future Expansion
+
+프로젝트가 확장되면 다음 기술을 검토한다.
+
+- QueryDSL
+- EntityGraph
+- Specification
+- Redis Cache
+- Elasticsearch
+
+현재 MVP에서는 사용하지 않는다.
+
+---
+
+# 28. Next Section
+
+다음 장에서는 DTO(Data Transfer Object) 설계 원칙을 정의한다.
+
+StorySeed는 Entity를 직접 API에 노출하지 않으며, Request DTO와 Response DTO를 분리하여 사용한다.
