@@ -4384,3 +4384,265 @@ Story
 # 38. Next Section
 
 다음 장에서는 StorySeed Database의 최종 관계도(ERD)와 Cascade 정책, Index 전략을 정리한다.
+
+# 39. Final Relationship Summary
+
+## 39.1 Core Entity Relationship
+
+StorySeed Database의 핵심 관계는 다음과 같다.
+
+```
+User
+ │
+ ├──────────────┐
+ │              │
+ ▼              ▼
+Story      UserSetting
+ │
+ ├──────────────────────────────────────────────┐
+ │          │            │          │           │
+ ▼          ▼            ▼          ▼           ▼
+Character Chapter   StorySummary Report   Bookmark
+ │          │
+ │          ▼
+ │       Choice
+ │          │
+ │          ▼
+ │    ChoiceResult
+ │
+ ▼
+CharacterState
+
+Story
+ │
+ ├────────► Genre
+ │
+ ├────────► World
+ │
+ ├────────► StoryFlag
+ │
+ ├────────► Inventory ─────► Item
+ │
+ └────────► AIGenerationLog ◄──── PromptTemplate
+```
+
+---
+
+## 39.2 Relationship Summary
+
+| Parent | Child | Relationship |
+|----------|----------|-------------|
+| User | Story | 1:N |
+| User | Bookmark | 1:N |
+| User | RefreshToken | 1:N |
+| User | UserSetting | 1:1 |
+| Story | Character | 1:1 |
+| Story | Chapter | 1:N |
+| Story | StorySummary | 1:N |
+| Story | EndingReport | 1:1 |
+| Story | Bookmark | 1:N |
+| Story | CharacterState | 1:N |
+| Story | StoryFlag | 1:N |
+| Story | Inventory | 1:N |
+| Story | AIGenerationLog | 1:N |
+| Chapter | Choice | 1:N |
+| Choice | ChoiceResult | 1:1 |
+| Item | Inventory | 1:N |
+| PromptTemplate | Chapter | 1:N |
+| PromptTemplate | AIGenerationLog | 1:N |
+| Genre | Story | 1:N |
+| World | Story | 1:N |
+
+---
+
+# 40. Cascade Policy
+
+## 40.1 Cascade Rules
+
+StorySeed는 데이터 무결성을 유지하기 위해 다음 Cascade 정책을 적용한다.
+
+| Parent | Child | Cascade |
+|----------|----------|----------|
+| Story | Character | ALL |
+| Story | Chapter | ALL |
+| Story | StorySummary | ALL |
+| Story | EndingReport | ALL |
+| Story | Bookmark | REMOVE |
+| Story | CharacterState | ALL |
+| Story | StoryFlag | ALL |
+| Story | Inventory | ALL |
+| Story | AIGenerationLog | ALL |
+| Chapter | Choice | ALL |
+| Choice | ChoiceResult | ALL |
+
+---
+
+## 40.2 Delete Policy
+
+Story 삭제 시
+
+- Character
+- Chapter
+- Choice
+- ChoiceResult
+- StorySummary
+- EndingReport
+- CharacterState
+- StoryFlag
+- Inventory
+- AI Generation Log
+
+를 함께 삭제한다.
+
+Master Data인
+
+- Genre
+- World
+- Item
+- PromptTemplate
+
+은 삭제 대상이 아니다.
+
+---
+
+# 41. Index Strategy
+
+## 41.1 Index Policy
+
+조회 성능 향상을 위해 자주 검색되는 컬럼에 인덱스를 생성한다.
+
+---
+
+## 41.2 Main Index
+
+| Index | Purpose |
+|---------|----------|
+| idx_story_user | 사용자 Story 조회 |
+| idx_story_status | 진행 상태 조회 |
+| idx_story_created | 최신 Story 조회 |
+| idx_chapter_story | Chapter 조회 |
+| idx_chapter_number | 이어쓰기 |
+| idx_choice_chapter | Choice 조회 |
+| idx_summary_story | Summary 조회 |
+| idx_ai_story | AI Log 조회 |
+| idx_ai_created | 기간별 분석 |
+| idx_users_email | 로그인 |
+| idx_users_provider | OAuth 로그인 |
+| idx_story_flag | StoryFlag 조회 |
+| idx_inventory_story | Inventory 조회 |
+
+---
+
+## 41.3 Unique Index
+
+| Unique Key | Description |
+|-------------|-------------|
+| users.email | 이메일 |
+| users.nickname | 닉네임 |
+| bookmarks(user_id, story_id) | 북마크 중복 방지 |
+| chapters(story_id, chapter_number) | Chapter 번호 |
+| choices(chapter_id, choice_order) | Choice 순서 |
+| inventories(story_id, item_id) | Story Item 중복 방지 |
+
+---
+
+# 42. JPA Mapping Strategy
+
+## 42.1 Fetch Strategy
+
+기본 Fetch 전략은 다음과 같다.
+
+```
+ManyToOne
+
+↓
+
+LAZY
+```
+
+```
+OneToOne
+
+↓
+
+LAZY
+```
+
+```
+OneToMany
+
+↓
+
+LAZY
+```
+
+필요한 경우 Fetch Join 또는 EntityGraph를 사용한다.
+
+---
+
+## 42.2 Cascade Strategy
+
+기본 정책은 다음과 같다.
+
+```
+CascadeType.ALL
+```
+
+Story 하위 데이터에 적용한다.
+
+Master Data는 Cascade를 사용하지 않는다.
+
+---
+
+## 42.3 Entity Design Principles
+
+모든 Entity는 다음 원칙을 따른다.
+
+- BaseEntity 상속
+- Long 타입 PK 사용
+- 생성일 및 수정일 자동 관리
+- JPA Auditing 사용
+- 양방향 연관관계 최소화
+- 필요한 경우에만 Cascade 적용
+
+---
+
+# 43. Database Design Summary
+
+StorySeed Database는 단순한 게시판 구조가 아닌,
+
+AI 기반 인터랙티브 스토리 플랫폼을 위한 데이터 구조를 목표로 설계하였다.
+
+이 설계는 다음 사항을 고려하였다.
+
+- AI 기반 Story 생성
+- 장편 Story 지원
+- Story 요약(Context Compression)
+- Prompt Version 관리
+- AI 호출 기록 관리
+- Story 상태 관리
+- Story Item 관리
+- Story Flag 관리
+- Narrative State 관리
+- 확장 가능한 Entity 구조
+
+향후 다음 기능을 추가하더라도 기존 Database 구조를 크게 변경하지 않고 확장할 수 있도록 설계하였다.
+
+- 협업 Story
+- AI 이미지 생성
+- 음성 생성
+- 번역
+- 추천 시스템
+- Story 공유
+- 유료 구독 기능
+- AI 모델 추가
+
+---
+
+# 44. Document End
+
+StorySeed Database Design 문서가 완료되었다.
+
+향후 Database 구조 변경은 Migration(Flyway 또는 Liquibase)을 통해 관리하며,
+
+모든 Entity 변경 사항은 본 문서를 함께 갱신하는 것을 원칙으로 한다.
