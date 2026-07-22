@@ -280,3 +280,133 @@ StorySeed API는 다음과 같이 구성된다.
 - Report API
 
 이후 각 API를 순서대로 정의한다.
+
+---
+
+# 9. Authentication API
+
+회원 인증은 Session 기반으로 처리한다.
+
+MVP에서는 다음 API를 제공한다.
+
+| Method | URL | Description |
+|---------|-----|-------------|
+| POST | /api/auth/signup | 회원가입 |
+| POST | /api/auth/login | 로그인 |
+| POST | /api/auth/logout | 로그아웃 |
+
+---
+
+# 10. Story API
+
+Story는 사용자가 생성한 인터랙티브 이야기를 의미한다.
+
+MVP에서는 다음 API를 제공한다.
+
+| Method | URL | Description |
+|---------|-----|-------------|
+| POST | /api/stories | 새로운 Story 생성 |
+| GET | /api/stories | 내 Story 목록 조회 |
+| GET | /api/stories/{storyId} | Story 상세 조회 |
+| POST | /api/stories/{storyId}/continue | 다음 Chapter 생성 |
+| DELETE | /api/stories/{storyId} | Story 삭제 |
+
+---
+
+# 11. Bookmark API
+
+사용자는 원하는 Story를 북마크할 수 있다.
+
+MVP에서는 다음 API를 제공한다.
+
+| Method | URL | Description |
+|---------|-----|-------------|
+| POST | /api/bookmarks | 북마크 추가 |
+| DELETE | /api/bookmarks/{storyId} | 북마크 삭제 |
+
+---
+
+# 12. Report API
+
+사용자는 AI가 생성한 부적절한 콘텐츠를 신고할 수 있다.
+
+MVP에서는 다음 API를 제공한다.
+
+| Method | URL | Description |
+|---------|-----|-------------|
+| POST | /api/reports | 콘텐츠 신고 |
+
+---
+
+# 13. API Flow
+
+StorySeed의 기본 API 흐름은 다음과 같다.
+
+```text
+회원가입
+
+↓
+
+로그인
+
+↓
+
+Story 생성
+
+↓
+
+첫 Chapter 생성
+
+↓
+
+Choice 선택
+
+↓
+
+다음 Chapter 생성
+
+↓
+
+Story 완료
+
+↓
+
+북마크 또는 삭제
+```
+
+---
+
+# 14. MVP Scope
+
+현재 MVP에서 구현하는 API는 다음과 같다.
+
+- 회원가입
+- 로그인
+- 로그아웃
+- Story 생성
+- Story 목록 조회
+- Story 상세 조회
+- Story 이어하기
+- Story 삭제
+- 북마크 추가
+- 북마크 삭제
+- 콘텐츠 신고
+
+총 11개의 API를 우선 구현한다.
+
+---
+
+# 15. Future Expansion
+
+서비스 확장 시 다음 API를 추가할 수 있다.
+
+- 회원정보 수정
+- Story 검색
+- Story 공유
+- 이미지 생성
+- 음성 생성
+- 알림 기능
+- 관리자 기능
+- OAuth2 로그인
+
+현재 MVP에서는 구현하지 않는다.
