@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>홈 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card">
+    <a class="brand" th:href="@{/}" href="/">StorySeed</a>
+    <h1>환영합니다.</h1>
+
+    <section id="user-info" class="user-info" aria-live="polite">
+        <p>현재 사용자 정보를 불러오는 중입니다.</p>
+    </section>
+
+    <p id="error-message" class="message error" role="alert"></p>
+    <button id="refresh-button" type="button">현재 사용자 조회</button>
+    <button id="logout-button" class="secondary" type="button">로그아웃</button>
+</main>
+
+<script>
+    const userInfo = document.getElementById("user-info");
+    const errorMessage = document.getElementById("error-message");
+
+    async function loadCurrentUser() {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
+
+        errorMessage.textContent = "";
+
+        try {
+            const response = await fetch("/api/users/me", {
+                headers: {Authorization: `Bearer ${token}`}
+            });
+
+            if (!response.ok) {
+                localStorage.removeItem("accessToken");
+                window.location.href = "/login";
+                return;
+            }
+
+            const result = await response.json();
+            const user = result.data;
+            userInfo.innerHTML = `
+                <p><strong>닉네임:</strong> ${escapeHtml(user.nickname)}</p>
+                <p><strong>이메일:</strong> ${escapeHtml(user.email)}</p>
+                <p><strong>권한:</strong> ${escapeHtml(user.role)}</p>
+            `;
+        } catch (error) {
+            errorMessage.textContent = "사용자 정보를 불러올 수 없습니다.";
+        }
+    }
+
+    function escapeHtml(value) {
+        const element = document.createElement("span");
+        element.textContent = value;
+        return element.innerHTML;
+    }
+
+    document.getElementById("refresh-button").addEventListener("click", loadCurrentUser);
+    document.getElementById("logout-button").addEventListener("click", () => {
+        localStorage.removeItem("accessToken");
+        window.location.href = "/login";
+    });
+
+    loadCurrentUser();
+</script>
+</body>
+</html>

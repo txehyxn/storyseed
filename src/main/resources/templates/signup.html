@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>회원가입 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card">
+    <a class="brand" th:href="@{/}" href="/">StorySeed</a>
+    <h1>회원가입</h1>
+
+    <form id="signup-form">
+        <label for="email">이메일</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+
+        <label for="password">비밀번호</label>
+        <input id="password" name="password" type="password"
+               autocomplete="new-password" minlength="8" maxlength="72" required>
+
+        <label for="nickname">닉네임</label>
+        <input id="nickname" name="nickname" type="text"
+               autocomplete="nickname" minlength="2" maxlength="50" required>
+
+        <p id="error-message" class="message error" role="alert" aria-live="polite"></p>
+        <button type="submit">회원가입</button>
+    </form>
+
+    <p class="switch-link">
+        이미 계정이 있나요?
+        <a th:href="@{/login}" href="/login">로그인</a>
+    </p>
+</main>
+
+<script>
+    const signupForm = document.getElementById("signup-form");
+    const errorMessage = document.getElementById("error-message");
+
+    signupForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorMessage.textContent = "";
+
+        const payload = {
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            nickname: document.getElementById("nickname").value
+        };
+
+        try {
+            const response = await fetch("/api/users/signup", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                errorMessage.textContent = result.message || "회원가입에 실패했습니다.";
+                return;
+            }
+
+            window.location.href = "/login";
+        } catch (error) {
+            errorMessage.textContent = "서버에 연결할 수 없습니다.";
+        }
+    });
+</script>
+</body>
+</html>

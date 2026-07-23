@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>로그인 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card">
+    <a class="brand" th:href="@{/}" href="/">StorySeed</a>
+    <h1>로그인</h1>
+
+    <form id="login-form">
+        <label for="email">이메일</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+
+        <label for="password">비밀번호</label>
+        <input id="password" name="password" type="password"
+               autocomplete="current-password" maxlength="72" required>
+
+        <p id="error-message" class="message error" role="alert" aria-live="polite"></p>
+        <button type="submit">로그인</button>
+    </form>
+
+    <p class="switch-link">
+        계정이 없나요?
+        <a th:href="@{/signup}" href="/signup">회원가입</a>
+    </p>
+</main>
+
+<script>
+    const loginForm = document.getElementById("login-form");
+    const errorMessage = document.getElementById("error-message");
+
+    loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorMessage.textContent = "";
+
+        const payload = {
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value
+        };
+
+        try {
+            const response = await fetch("/api/users/login", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                errorMessage.textContent = result.message || "로그인에 실패했습니다.";
+                return;
+            }
+
+            localStorage.setItem("accessToken", result.data.accessToken);
+            window.location.href = "/home";
+        } catch (error) {
+            errorMessage.textContent = "서버에 연결할 수 없습니다.";
+        }
+    });
+</script>
+</body>
+</html>

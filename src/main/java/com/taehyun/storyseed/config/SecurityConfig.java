@@ -42,7 +42,16 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, SIGN_UP_PATH, LOGIN_PATH).permitAll()
-                        .requestMatchers("/", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/signup",
+                                "/login",
+                                "/home",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/favicon.ico"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
