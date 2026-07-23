@@ -1,10 +1,12 @@
 package com.taehyun.storyseed.user.controller;
 
 import com.taehyun.storyseed.user.domain.UserRole;
+import com.taehyun.storyseed.user.dto.LoginRequest;
 import com.taehyun.storyseed.user.dto.SignUpRequest;
 import com.taehyun.storyseed.user.dto.UserResponse;
 import com.taehyun.storyseed.user.exception.DuplicateEmailException;
 import com.taehyun.storyseed.user.exception.DuplicateNicknameException;
+import com.taehyun.storyseed.user.exception.InvalidLoginException;
 import com.taehyun.storyseed.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -164,6 +166,65 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
+    @Test
+    void loginReturnsUserWithoutAuthentication() throws Exception {
+        UserResponse response = new UserResponse(
+                1L,
+                "user@test.com",
+                "태현",
+                UserRole.USER
+        );
+        when(userService.login(any(LoginRequest.class))).thenReturn(response);
+
+        performValidLogin()
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.email").value("user@test.com"))
+                .andExpect(jsonPath("$.data.nickname").value("태현"))
+                .andExpect(jsonPath("$.data.role").value("USER"))
+                .andExpect(jsonPath("$.message").doesNotExist())
+                .andExpect(jsonPath("$.data.password").doesNotExist());
+    }
+
+    @Test
+    void loginReturnsUnauthorizedForUnknownEmail() throws Exception {
+        when(userService.login(any(LoginRequest.class))).thenThrow(new InvalidLoginException());
+
+        performValidLogin()
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message")
+                        .value("이메일 또는 비밀번호가 올바르지 않습니다."))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void loginReturnsUnauthorizedForWrongPassword() throws Exception {
+        when(userService.login(any(LoginRequest.class))).thenThrow(new InvalidLoginException());
+
+        performValidLogin()
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message")
+                        .value("이메일 또는 비밀번호가 올바르지 않습니다."));
+    }
+
+    @Test
+    void loginReturnsBadRequestForInvalidInput() throws Exception {
+        mockMvc.perform(post("/api/users/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "invalid-email",
+                                  "password": ""
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
     private org.springframework.test.web.servlet.ResultActions performValidSignUp() throws Exception {
         return mockMvc.perform(post("/api/users/signup")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -172,6 +233,17 @@ class UserControllerTest {
                           "email": "user@example.com",
                           "password": "password123",
                           "nickname": "taehyun"
+                        }
+                        """));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions performValidLogin() throws Exception {
+        return mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "email": "user@test.com",
+                          "password": "password123"
                         }
                         """));
     }

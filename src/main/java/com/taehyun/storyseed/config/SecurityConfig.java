@@ -12,6 +12,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private static final String SIGN_UP_PATH = "/api/users/signup";
+    private static final String LOGIN_PATH = "/api/users/login";
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -21,9 +22,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers(SIGN_UP_PATH))
+                .csrf(csrf -> csrf.ignoringRequestMatchers(SIGN_UP_PATH, LOGIN_PATH))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, SIGN_UP_PATH).permitAll()
+                        .requestMatchers(HttpMethod.POST, SIGN_UP_PATH, LOGIN_PATH).permitAll()
                         .requestMatchers("/", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .anyRequest().authenticated()
                 );

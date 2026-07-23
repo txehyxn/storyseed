@@ -3,6 +3,7 @@ package com.taehyun.storyseed.common.exception;
 import com.taehyun.storyseed.common.response.ApiResponse;
 import com.taehyun.storyseed.user.exception.DuplicateEmailException;
 import com.taehyun.storyseed.user.exception.DuplicateNicknameException;
+import com.taehyun.storyseed.user.exception.InvalidLoginException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleDuplicate(RuntimeException exception) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.failure(exception.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidLoginException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidLogin(InvalidLoginException exception) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.failure(exception.getMessage()));
     }
 

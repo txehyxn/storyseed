@@ -1,10 +1,12 @@
 package com.taehyun.storyseed.user.service;
 
 import com.taehyun.storyseed.user.domain.User;
+import com.taehyun.storyseed.user.dto.LoginRequest;
 import com.taehyun.storyseed.user.dto.SignUpRequest;
 import com.taehyun.storyseed.user.dto.UserResponse;
 import com.taehyun.storyseed.user.exception.DuplicateEmailException;
 import com.taehyun.storyseed.user.exception.DuplicateNicknameException;
+import com.taehyun.storyseed.user.exception.InvalidLoginException;
 import com.taehyun.storyseed.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,5 +93,53 @@ class UserServiceTest {
         assertThrows(DuplicateNicknameException.class, () -> userService.signUp(request));
 
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void loginNormalizesEmailAndReturnsUserForMatchingPassword() {
+        User user = User.createLocal(
+                "user@example.com",
+                passwordEncoder.encode("password123"),
+                "taehyun"
+        );
+        when(userRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(user));
+
+        UserResponse response = userService.login(
+                new LoginRequest("  User@Example.COM  ", "password123")
+        );
+
+        verify(userRepository).findByEmail("user@example.com");
+        assertEquals("user@example.com", response.email());
+        assertEquals("taehyun", response.nickname());
+    }
+
+    @Test
+    void loginRejectsUnknownEmailWithCommonMessage() {
+        when(userRepository.findByEmail("missing@example.com"))
+                .thenReturn(java.util.Optional.empty());
+
+        InvalidLoginException exception = assertThrows(
+                InvalidLoginException.class,
+                () -> userService.login(new LoginRequest("missing@example.com", "password123"))
+        );
+
+        assertEquals("이메일 또는 비밀번호가 올바르지 않습니다.", exception.getMessage());
+    }
+
+    @Test
+    void loginRejectsWrongPasswordWithSameCommonMessage() {
+        User user = User.createLocal(
+                "user@example.com",
+                passwordEncoder.encode("correct-password"),
+                "taehyun"
+        );
+        when(userRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(user));
+
+        InvalidLoginException exception = assertThrows(
+                InvalidLoginException.class,
+                () -> userService.login(new LoginRequest("user@example.com", "wrong-password"))
+        );
+
+        assertEquals("이메일 또는 비밀번호가 올바르지 않습니다.", exception.getMessage());
     }
 }
