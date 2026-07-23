@@ -14,6 +14,7 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 @Getter
 @Entity
@@ -79,18 +80,19 @@ public class User {
     }
 
     public static User createLocal(String email, String encodedPassword, String nickname) {
-        requireNonBlank(email, "email");
+        String normalizedEmail = normalizeRequiredEmail(email);
         requireNonBlank(encodedPassword, "encodedPassword");
         requireNonBlank(nickname, "nickname");
 
-        return new User(email, encodedPassword, nickname, AuthProvider.LOCAL, null);
+        return new User(normalizedEmail, encodedPassword, nickname, AuthProvider.LOCAL, null);
     }
 
     public static User createKakao(String email, String nickname, String providerId) {
+        String normalizedEmail = normalizeOptionalEmail(email);
         requireNonBlank(nickname, "nickname");
         requireNonBlank(providerId, "providerId");
 
-        return new User(email, null, nickname, AuthProvider.KAKAO, providerId);
+        return new User(normalizedEmail, null, nickname, AuthProvider.KAKAO, providerId);
     }
 
     @PrePersist
@@ -109,5 +111,23 @@ public class User {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + " must not be blank");
         }
+    }
+
+    private static String normalizeRequiredEmail(String email) {
+        requireNonBlank(email, "email");
+        return normalizeEmail(email);
+    }
+
+    private static String normalizeOptionalEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+
+        requireNonBlank(email, "email");
+        return normalizeEmail(email);
+    }
+
+    private static String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }
