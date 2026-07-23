@@ -2,6 +2,7 @@ package com.taehyun.storyseed.user.controller;
 
 import com.taehyun.storyseed.common.response.ApiResponse;
 import com.taehyun.storyseed.user.dto.LoginRequest;
+import com.taehyun.storyseed.user.dto.LoginResponse;
 import com.taehyun.storyseed.user.dto.SignUpRequest;
 import com.taehyun.storyseed.user.dto.UserResponse;
 import com.taehyun.storyseed.user.service.UserService;
@@ -34,10 +35,10 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserResponse>> login(
+    public ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request
     ) {
-        UserResponse response = userService.login(request);
+        LoginResponse response = userService.login(request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

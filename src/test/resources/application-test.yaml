@@ -8,3 +8,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+jwt:
+  secret: storyseed-test-secret-key-long-enough-for-hs256
+  access-token-expiration-seconds: 3600

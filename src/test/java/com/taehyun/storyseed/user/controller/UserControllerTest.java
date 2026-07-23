@@ -2,6 +2,7 @@ package com.taehyun.storyseed.user.controller;
 
 import com.taehyun.storyseed.user.domain.UserRole;
 import com.taehyun.storyseed.user.dto.LoginRequest;
+import com.taehyun.storyseed.user.dto.LoginResponse;
 import com.taehyun.storyseed.user.dto.SignUpRequest;
 import com.taehyun.storyseed.user.dto.UserResponse;
 import com.taehyun.storyseed.user.exception.DuplicateEmailException;
@@ -168,11 +169,16 @@ class UserControllerTest {
 
     @Test
     void loginReturnsUserWithoutAuthentication() throws Exception {
-        UserResponse response = new UserResponse(
-                1L,
-                "user@test.com",
-                "태현",
-                UserRole.USER
+        LoginResponse response = new LoginResponse(
+                "access-token",
+                "Bearer",
+                3600L,
+                new UserResponse(
+                        1L,
+                        "user@test.com",
+                        "태현",
+                        UserRole.USER
+                )
         );
         when(userService.login(any(LoginRequest.class))).thenReturn(response);
 
@@ -180,12 +186,15 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.email").value("user@test.com"))
-                .andExpect(jsonPath("$.data.nickname").value("태현"))
-                .andExpect(jsonPath("$.data.role").value("USER"))
+                .andExpect(jsonPath("$.data.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.data.expiresIn").value(3600))
+                .andExpect(jsonPath("$.data.user.id").value(1))
+                .andExpect(jsonPath("$.data.user.email").value("user@test.com"))
+                .andExpect(jsonPath("$.data.user.nickname").value("태현"))
+                .andExpect(jsonPath("$.data.user.role").value("USER"))
                 .andExpect(jsonPath("$.message").doesNotExist())
-                .andExpect(jsonPath("$.data.password").doesNotExist());
+                .andExpect(jsonPath("$.data.user.password").doesNotExist());
     }
 
     @Test

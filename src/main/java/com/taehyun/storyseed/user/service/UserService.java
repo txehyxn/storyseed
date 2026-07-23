@@ -1,7 +1,9 @@
 package com.taehyun.storyseed.user.service;
 
+import com.taehyun.storyseed.config.jwt.JwtTokenProvider;
 import com.taehyun.storyseed.user.domain.User;
 import com.taehyun.storyseed.user.dto.LoginRequest;
+import com.taehyun.storyseed.user.dto.LoginResponse;
 import com.taehyun.storyseed.user.dto.SignUpRequest;
 import com.taehyun.storyseed.user.dto.UserResponse;
 import com.taehyun.storyseed.user.exception.DuplicateEmailException;
@@ -19,10 +21,16 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtTokenProvider jwtTokenProvider
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Transactional
@@ -45,7 +53,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
         String normalizedEmail = request.email().trim().toLowerCase(Locale.ROOT);
         User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(InvalidLoginException::new);
@@ -55,6 +63,12 @@ public class UserService {
             throw new InvalidLoginException();
         }
 
-        return UserResponse.from(user);
+        String accessToken = jwtTokenProvider.createAccessToken(user);
+        return new LoginResponse(
+                accessToken,
+                "Bearer",
+                jwtTokenProvider.getAccessTokenExpirationSeconds(),
+                UserResponse.from(user)
+        );
     }
 }
