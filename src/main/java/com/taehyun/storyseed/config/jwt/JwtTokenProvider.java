@@ -1,6 +1,8 @@
 package com.taehyun.storyseed.config.jwt;
 
 import com.taehyun.storyseed.user.domain.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -45,5 +47,26 @@ public class JwtTokenProvider {
 
     public long getAccessTokenExpirationSeconds() {
         return accessTokenExpirationSeconds;
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            parseClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
+    public String getEmailFromToken(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

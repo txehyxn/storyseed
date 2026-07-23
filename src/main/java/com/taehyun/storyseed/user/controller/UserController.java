@@ -1,6 +1,7 @@
 package com.taehyun.storyseed.user.controller;
 
 import com.taehyun.storyseed.common.response.ApiResponse;
+import com.taehyun.storyseed.user.domain.User;
 import com.taehyun.storyseed.user.dto.LoginRequest;
 import com.taehyun.storyseed.user.dto.LoginResponse;
 import com.taehyun.storyseed.user.dto.SignUpRequest;
@@ -9,6 +10,8 @@ import com.taehyun.storyseed.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,5 +43,12 @@ public class UserController {
     ) {
         LoginResponse response = userService.login(request);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
+            @AuthenticationPrincipal User user
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(UserResponse.from(user)));
     }
 }

@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -61,6 +63,56 @@ class JwtTokenProviderTest {
         );
 
         assertEquals("JWT secret must be at least 32 bytes for HS256", exception.getMessage());
+    }
+
+    @Test
+    void validatesTokenAndExtractsEmail() {
+        JwtTokenProvider provider = new JwtTokenProvider(properties(SECRET, EXPIRATION_SECONDS));
+        User user = User.createLocal(
+                "user@example.com",
+                "encoded-password",
+                "taehyun"
+        );
+
+        String token = provider.createAccessToken(user);
+
+        assertEquals(true, provider.validateToken(token));
+        assertEquals("user@example.com", provider.getEmailFromToken(token));
+    }
+
+    @Test
+    void rejectsExpiredToken() {
+        JwtTokenProvider provider = new JwtTokenProvider(properties(SECRET, EXPIRATION_SECONDS));
+        Instant now = Instant.now();
+        String expiredToken = Jwts.builder()
+                .subject("user@example.com")
+                .issuedAt(Date.from(now.minusSeconds(120)))
+                .expiration(Date.from(now.minusSeconds(60)))
+                .signWith(
+                        Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8)),
+                        Jwts.SIG.HS256
+                )
+                .compact();
+
+        assertEquals(false, provider.validateToken(expiredToken));
+    }
+
+    @Test
+    void rejectsTokenWithInvalidSignature() {
+        JwtTokenProvider provider = new JwtTokenProvider(properties(SECRET, EXPIRATION_SECONDS));
+        JwtTokenProvider otherProvider = new JwtTokenProvider(properties(
+                "different-test-secret-key-long-enough-for-hs256",
+                EXPIRATION_SECONDS
+        ));
+        User user = User.createLocal(
+                "user@example.com",
+                "encoded-password",
+                "taehyun"
+        );
+
+        String token = otherProvider.createAccessToken(user);
+
+        assertEquals(false, provider.validateToken(token));
     }
 
     private JwtProperties properties(String secret, long expirationSeconds) {

@@ -1,5 +1,7 @@
 package com.taehyun.storyseed.user.controller;
 
+import com.taehyun.storyseed.config.jwt.JwtTokenProvider;
+import com.taehyun.storyseed.user.domain.User;
 import com.taehyun.storyseed.user.domain.UserRole;
 import com.taehyun.storyseed.user.dto.LoginRequest;
 import com.taehyun.storyseed.user.dto.LoginResponse;
@@ -8,6 +10,7 @@ import com.taehyun.storyseed.user.dto.UserResponse;
 import com.taehyun.storyseed.user.exception.DuplicateEmailException;
 import com.taehyun.storyseed.user.exception.DuplicateNicknameException;
 import com.taehyun.storyseed.user.exception.InvalidLoginException;
+import com.taehyun.storyseed.user.repository.UserRepository;
 import com.taehyun.storyseed.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -38,10 +42,17 @@ class UserControllerTest {
     @MockitoBean
     private UserService userService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
+        userRepository.deleteAll();
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(context)
                 .apply(springSecurity())
@@ -232,6 +243,39 @@ class UserControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    void getCurrentUserReturnsAuthenticatedUser() throws Exception {
+        User user = userRepository.save(User.createLocal(
+                "user@test.com",
+                "encoded-password",
+                "taehyun"
+        ));
+        String token = jwtTokenProvider.createAccessToken(user);
+
+        mockMvc.perform(get("/api/users/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(user.getId()))
+                .andExpect(jsonPath("$.data.email").value("user@test.com"))
+                .andExpect(jsonPath("$.data.nickname").value("taehyun"))
+                .andExpect(jsonPath("$.data.role").value("USER"))
+                .andExpect(jsonPath("$.data.password").doesNotExist());
+    }
+
+    @Test
+    void getCurrentUserReturnsUnauthorizedWithoutToken() throws Exception {
+        mockMvc.perform(get("/api/users/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getCurrentUserReturnsUnauthorizedWithInvalidToken() throws Exception {
+        mockMvc.perform(get("/api/users/me")
+                        .header("Authorization", "Bearer invalid-token"))
+                .andExpect(status().isUnauthorized());
     }
 
     private org.springframework.test.web.servlet.ResultActions performValidSignUp() throws Exception {
