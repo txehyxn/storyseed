@@ -15,6 +15,7 @@
         <p>현재 사용자 정보를 불러오는 중입니다.</p>
     </section>
 
+    <a class="primary-link" th:href="@{/story/start}" href="/story/start">이야기 시작</a>
     <p id="error-message" class="message error" role="alert"></p>
     <button id="refresh-button" type="button">현재 사용자 조회</button>
     <form th:action="@{/logout}" method="post">

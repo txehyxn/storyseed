@@ -3,20 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${story.title + ' | StorySeed'}">이야기 | StorySeed</title>
+    <title th:text="${(story.title != null ? story.title : story.displayTitle) + ' | StorySeed'}">
+        이야기 | StorySeed
+    </title>
     <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
 </head>
 <body>
-<main class="auth-card">
+<main class="auth-card story-card">
     <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
-    <h1 th:text="${story.title}">이야기 제목</h1>
+    <h1 th:text="${story.title != null ? story.title : story.displayTitle}">판타지 이야기</h1>
+    <p class="story-status" th:text="${story.status == T(com.taehyun.storyseed.story.domain.StoryStatus).IN_PROGRESS ? '진행 중' : story.status}">
+        진행 중
+    </p>
 
     <section class="user-info">
-        <p><strong>주제</strong></p>
-        <p th:text="${story.theme}">이야기 주제</p>
-        <p><strong>상태</strong></p>
-        <p th:text="${story.status}">IN_PROGRESS</p>
+        <p>
+            <strong>주 장르:</strong>
+            <span th:text="${story.primaryGenre.displayName}">판타지</span>
+        </p>
+        <p th:if="${!story.secondaryGenres.empty}">
+            <strong>보조 장르:</strong>
+            <span th:text="${#strings.listJoin(story.secondaryGenres.![displayName], ', ')}">추리</span>
+        </p>
     </section>
+
+    <article class="chapter" th:each="chapter : ${story.chapters}">
+        <h2 th:text="${chapter.chapterNumber + '장'}">1장</h2>
+        <p class="chapter-content" th:text="${chapter.content}">이야기 도입부</p>
+
+        <section class="choice-section" th:if="${!chapter.choices.empty}">
+            <h3>어떻게 행동할까요?</h3>
+            <ol class="choice-list">
+                <li class="choice-item"
+                    th:each="choice : ${chapter.choices}"
+                    th:text="${choice.content}">
+                    선택지
+                </li>
+            </ol>
+        </section>
+    </article>
 </main>
 </body>
 </html>

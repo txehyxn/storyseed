@@ -7,35 +7,76 @@
     <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
 </head>
 <body>
-<main class="auth-card">
+<main class="auth-card story-card">
     <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
-    <h1>새 이야기 만들기</h1>
+    <h1>어떤 이야기를 시작할까요?</h1>
+    <p>먼저 선택한 장르가 이야기의 중심이 됩니다. 1개에서 3개까지 골라주세요.</p>
 
-    <form th:action="@{/stories}" th:object="${request}" method="post">
-        <label for="title">제목</label>
-        <input
-                id="title"
-                type="text"
-                th:field="*{title}"
-                maxlength="100"
-                placeholder="이야기 제목을 입력하세요"
-                required
-        >
-        <p class="message error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></p>
+    <form id="story-form" th:action="@{/stories}" th:object="${request}" method="post">
+        <div id="selected-genre-inputs"></div>
+        <div class="genre-grid">
+            <button
+                    th:each="genre : ${genres}"
+                    class="genre-option"
+                    type="button"
+                    th:data-value="${genre.name()}"
+                    th:text="${genre.displayName}"
+            >판타지</button>
+        </div>
 
-        <label for="theme">주제</label>
-        <textarea
-                id="theme"
-                th:field="*{theme}"
-                maxlength="500"
-                rows="6"
-                placeholder="이야기의 주제를 입력하세요"
-                required
-        ></textarea>
-        <p class="message error" th:if="${#fields.hasErrors('theme')}" th:errors="*{theme}"></p>
+        <section class="selection-summary" aria-live="polite">
+            <strong>선택 순서</strong>
+            <ol id="selected-genres"></ol>
+        </section>
 
-        <button type="submit">이야기 만들기</button>
+        <p class="message error"
+           th:if="${#fields.hasAnyErrors()}"
+           th:each="error : ${#fields.allErrors()}"
+           th:text="${error}"></p>
+
+        <button id="start-button" type="submit">이야기 시작하기</button>
     </form>
 </main>
+
+<script>
+    const selected = [];
+    const genreButtons = document.querySelectorAll(".genre-option");
+    const selectedGenres = document.getElementById("selected-genres");
+    const selectedInputs = document.getElementById("selected-genre-inputs");
+
+    genreButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const value = button.dataset.value;
+            const existingIndex = selected.findIndex((genre) => genre.value === value);
+
+            if (existingIndex >= 0) {
+                selected.splice(existingIndex, 1);
+                button.classList.remove("selected");
+            } else if (selected.length < 3) {
+                selected.push({value, label: button.textContent});
+                button.classList.add("selected");
+            }
+
+            renderSelection();
+        });
+    });
+
+    function renderSelection() {
+        selectedGenres.replaceChildren();
+        selectedInputs.replaceChildren();
+
+        selected.forEach((genre) => {
+            const item = document.createElement("li");
+            item.textContent = genre.label;
+            selectedGenres.appendChild(item);
+
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "genres";
+            input.value = genre.value;
+            selectedInputs.appendChild(input);
+        });
+    }
+</script>
 </body>
 </html>

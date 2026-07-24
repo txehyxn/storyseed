@@ -3,79 +3,98 @@ package com.taehyun.storyseed.story.domain;
 import com.taehyun.storyseed.user.domain.User;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StoryTest {
 
     @Test
-    void createSetsRequiredFieldsAndDefaultStatus() {
+    void createWithOneGenreSetsInitialState() {
         User user = createUser();
 
-        Story story = Story.create(user, "모험 이야기", "잃어버린 왕국 탐험");
+        Story story = Story.create(user, List.of(Genre.FANTASY));
 
         assertSame(user, story.getUser());
-        assertEquals("모험 이야기", story.getTitle());
-        assertEquals("잃어버린 왕국 탐험", story.getTheme());
+        assertNull(story.getTitle());
+        assertEquals(List.of(Genre.FANTASY), story.getGenres());
         assertEquals(StoryStatus.IN_PROGRESS, story.getStatus());
     }
 
     @Test
-    void completeChangesStatusToCompleted() {
-        Story story = createStory();
+    void createPreservesGenrePriorityOrder() {
+        Story story = Story.create(
+                createUser(),
+                List.of(Genre.FANTASY, Genre.MYSTERY, Genre.HORROR)
+        );
 
-        story.complete();
-
-        assertEquals(StoryStatus.COMPLETED, story.getStatus());
+        assertEquals(Genre.FANTASY, story.getPrimaryGenre());
+        assertEquals(
+                List.of(Genre.MYSTERY, Genre.HORROR),
+                story.getSecondaryGenres()
+        );
+        assertEquals("판타지 · 추리 · 공포 이야기", story.getDisplayTitle());
     }
 
     @Test
-    void createTrimsTitleAndTheme() {
-        Story story = Story.create(createUser(), "  모험 이야기  ", "  잃어버린 왕국 탐험  ");
+    void createAcceptsTwoAndThreeGenres() {
+        Story twoGenres = Story.create(
+                createUser(),
+                List.of(Genre.ADVENTURE, Genre.COMEDY)
+        );
+        Story threeGenres = Story.create(
+                createUser(),
+                List.of(Genre.ROMANCE, Genre.SLICE_OF_LIFE, Genre.COMEDY)
+        );
 
-        assertEquals("모험 이야기", story.getTitle());
-        assertEquals("잃어버린 왕국 탐험", story.getTheme());
+        assertEquals(2, twoGenres.getGenres().size());
+        assertEquals(3, threeGenres.getGenres().size());
     }
 
     @Test
     void createRejectsNullUser() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> Story.create(null, "모험 이야기", "잃어버린 왕국 탐험")
+                () -> Story.create(null, List.of(Genre.FANTASY))
         );
     }
 
     @Test
-    void createRejectsNullOrBlankTitle() {
+    void createRejectsMissingGenres() {
         User user = createUser();
 
+        assertThrows(IllegalArgumentException.class, () -> Story.create(user, null));
+        assertThrows(IllegalArgumentException.class, () -> Story.create(user, List.of()));
+    }
+
+    @Test
+    void createRejectsMoreThanThreeGenres() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> Story.create(user, null, "잃어버린 왕국 탐험")
-        );
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> Story.create(user, "   ", "잃어버린 왕국 탐험")
+                () -> Story.create(
+                        createUser(),
+                        List.of(
+                                Genre.FANTASY,
+                                Genre.ADVENTURE,
+                                Genre.MYSTERY,
+                                Genre.HORROR
+                        )
+                )
         );
     }
 
     @Test
-    void createRejectsNullOrBlankTheme() {
-        User user = createUser();
-
+    void createRejectsDuplicateGenres() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> Story.create(user, "모험 이야기", null)
+                () -> Story.create(
+                        createUser(),
+                        List.of(Genre.FANTASY, Genre.FANTASY)
+                )
         );
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> Story.create(user, "모험 이야기", "   ")
-        );
-    }
-
-    private static Story createStory() {
-        return Story.create(createUser(), "모험 이야기", "잃어버린 왕국 탐험");
     }
 
     private static User createUser() {

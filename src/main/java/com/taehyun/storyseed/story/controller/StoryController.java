@@ -1,6 +1,7 @@
 package com.taehyun.storyseed.story.controller;
 
 import com.taehyun.storyseed.story.domain.Story;
+import com.taehyun.storyseed.story.domain.Genre;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.service.StoryService;
 import com.taehyun.storyseed.user.domain.User;
@@ -27,7 +28,8 @@ public class StoryController {
 
     @GetMapping("/new")
     public String newStoryForm(Model model) {
-        model.addAttribute("request", new CreateStoryRequest("", ""));
+        model.addAttribute("request", new CreateStoryRequest(java.util.List.of()));
+        model.addAttribute("genres", Genre.values());
         return "story/new";
     }
 
@@ -35,9 +37,11 @@ public class StoryController {
     public String createStory(
             @AuthenticationPrincipal User user,
             @Valid @ModelAttribute("request") CreateStoryRequest request,
-            BindingResult bindingResult
+            BindingResult bindingResult,
+            Model model
     ) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("genres", Genre.values());
             return "story/new";
         }
 
@@ -51,7 +55,7 @@ public class StoryController {
             @PathVariable Long storyId,
             Model model
     ) {
-        model.addAttribute("story", storyService.getStory(user, storyId));
+        model.addAttribute("story", storyService.getStoryDetail(user, storyId));
         return "story/detail";
     }
 }

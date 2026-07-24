@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>준비 중 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card coming-soon-card">
+    <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
+    <p class="story-status">준비 중</p>
+    <h1 th:text="${featureName}">새로운 이야기 기능</h1>
+    <p>더 좋은 이야기 경험을 위해 준비하고 있습니다.</p>
+    <a class="primary-link" th:href="@{/story/start}" href="/story/start">이야기 시작 화면으로 돌아가기</a>
+</main>
+</body>
+</html>

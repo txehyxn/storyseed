@@ -1,15 +1,21 @@
 package com.taehyun.storyseed.story.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.taehyun.storyseed.story.domain.Genre;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
-public record CreateStoryRequest(
-        @NotBlank(message = "제목은 필수입니다.")
-        @Size(max = 100, message = "제목은 100자 이하여야 합니다.")
-        String title,
+import java.util.HashSet;
+import java.util.List;
 
-        @NotBlank(message = "주제는 필수입니다.")
-        @Size(max = 500, message = "주제는 500자 이하여야 합니다.")
-        String theme
+public record CreateStoryRequest(
+        @NotEmpty(message = "장르를 하나 이상 선택해주세요.")
+        @Size(max = 3, message = "장르는 최대 3개까지 선택할 수 있습니다.")
+        List<Genre> genres
 ) {
+
+    @AssertTrue(message = "같은 장르를 중복해서 선택할 수 없습니다.")
+    public boolean isGenreSelectionDistinct() {
+        return genres == null || new HashSet<>(genres).size() == genres.size();
+    }
 }

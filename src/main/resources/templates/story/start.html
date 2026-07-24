@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>이야기 시작 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card start-page">
+    <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
+    <header class="start-header">
+        <h1>어떤 방식으로 이야기를 시작할까요?</h1>
+        <p>마음에 드는 방식을 선택해 나만의 이야기를 시작해 보세요.</p>
+    </header>
+
+    <section class="start-options" aria-label="이야기 시작 방식">
+        <article class="start-option-card available">
+            <span class="status-badge available-status">사용 가능</span>
+            <h2>새로운 이야기 만들기</h2>
+            <p>장르를 선택해 새로운 이야기의 첫 장면을 만듭니다.</p>
+            <a class="option-link primary-link" th:href="@{/stories/new}" href="/stories/new">시작하기</a>
+        </article>
+
+        <article class="start-option-card">
+            <span class="status-badge">준비 중</span>
+            <h2>명작 다시 쓰기</h2>
+            <p>익숙한 명작을 나만의 선택으로 새롭게 풀어갑니다.</p>
+            <a class="option-link secondary-link" th:href="@{/story/coming-soon(mode='classic')}"
+               href="/story/coming-soon?mode=classic">자세히 보기</a>
+        </article>
+
+        <article class="start-option-card">
+            <span class="status-badge">준비 중</span>
+            <h2>나만의 세계 만들기</h2>
+            <p>세계관과 인물을 설정하고 그 안에서 이야기를 시작합니다.</p>
+            <a class="option-link secondary-link" th:href="@{/story/coming-soon(mode='world')}"
+               href="/story/coming-soon?mode=world">자세히 보기</a>
+        </article>
+
+        <article class="start-option-card">
+            <span class="status-badge">준비 중</span>
+            <h2>AI 추천 이야기</h2>
+            <p>취향에 맞는 이야기 소재와 시작점을 추천받습니다.</p>
+            <a class="option-link secondary-link" th:href="@{/story/coming-soon(mode='recommendation')}"
+               href="/story/coming-soon?mode=recommendation">자세히 보기</a>
+        </article>
+
+        <article class="start-option-card">
+            <span class="status-badge">준비 중</span>
+            <h2>이야기 씨앗으로 만들기</h2>
+            <p>짧은 아이디어 한 줄을 풍성한 이야기로 키웁니다.</p>
+            <a class="option-link secondary-link" th:href="@{/story/coming-soon(mode='seed')}"
+               href="/story/coming-soon?mode=seed">자세히 보기</a>
+        </article>
+
+        <article class="start-option-card">
+            <span class="status-badge">준비 중</span>
+            <h2>이어서 쓰기</h2>
+            <p>저장해 둔 이야기로 돌아가 다음 장면을 이어갑니다.</p>
+            <a class="option-link secondary-link" th:href="@{/story/coming-soon(mode='continue')}"
+               href="/story/coming-soon?mode=continue">자세히 보기</a>
+        </article>
+    </section>
+</main>
+</body>
+</html>

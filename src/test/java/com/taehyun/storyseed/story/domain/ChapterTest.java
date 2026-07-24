@@ -1,6 +1,7 @@
 package com.taehyun.storyseed.story.domain;
 
 import com.taehyun.storyseed.user.domain.User;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -65,6 +66,6 @@ class ChapterTest {
 
     private static Story createStory() {
         User user = User.createLocal("user@example.com", "encoded-password", "storyteller");
-        return Story.create(user, "모험 이야기", "잃어버린 왕국 탐험");
+        return Story.create(user, List.of(Genre.ADVENTURE));
     }
 }
