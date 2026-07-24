@@ -1,6 +1,7 @@
 package com.taehyun.storyseed.user.controller;
 
 import com.taehyun.storyseed.common.response.ApiResponse;
+import com.taehyun.storyseed.config.jwt.JwtCookieProvider;
 import com.taehyun.storyseed.user.domain.User;
 import com.taehyun.storyseed.user.dto.LoginRequest;
 import com.taehyun.storyseed.user.dto.LoginResponse;
@@ -8,6 +9,8 @@ import com.taehyun.storyseed.user.dto.SignUpRequest;
 import com.taehyun.storyseed.user.dto.UserResponse;
 import com.taehyun.storyseed.user.service.UserService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final JwtCookieProvider jwtCookieProvider;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, JwtCookieProvider jwtCookieProvider) {
         this.userService = userService;
+        this.jwtCookieProvider = jwtCookieProvider;
     }
 
     @PostMapping("/signup")
@@ -39,10 +44,20 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
-            @Valid @RequestBody LoginRequest request
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpServletRequest
     ) {
         LoginResponse response = userService.login(request);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        jwtCookieProvider.createAccessTokenCookie(
+                                response.accessToken(),
+                                response.expiresIn(),
+                                httpServletRequest.isSecure()
+                        ).toString()
+                )
+                .body(ApiResponse.success(response));
     }
 
     @GetMapping("/me")

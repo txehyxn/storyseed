@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import jakarta.servlet.http.Cookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -27,6 +28,8 @@ class JwtAuthenticationFilterTest {
 
     @Mock
     private JwtTokenProvider jwtTokenProvider;
+
+    private final JwtCookieProvider jwtCookieProvider = new JwtCookieProvider();
 
     @Mock
     private UserRepository userRepository;
@@ -73,6 +76,55 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    void validCookieTokenStoresAuthentication() throws Exception {
+        User user = User.createLocal(
+                "user@example.com",
+                "encoded-password",
+                "taehyun"
+        );
+        when(jwtTokenProvider.validateToken("cookie-token")).thenReturn(true);
+        when(jwtTokenProvider.getEmailFromToken("cookie-token"))
+                .thenReturn("user@example.com");
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie(
+                JwtCookieProvider.ACCESS_TOKEN_COOKIE_NAME,
+                "cookie-token"
+        ));
+
+        filter().doFilter(
+                request,
+                new MockHttpServletResponse(),
+                new MockFilterChain()
+        );
+
+        assertSame(
+                user,
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal()
+        );
+    }
+
+    @Test
+    void authorizationHeaderTakesPriorityOverCookie() throws Exception {
+        MockHttpServletRequest request = requestWithAuthorization("Bearer header-token");
+        request.setCookies(new Cookie(
+                JwtCookieProvider.ACCESS_TOKEN_COOKIE_NAME,
+                "cookie-token"
+        ));
+        when(jwtTokenProvider.validateToken("header-token")).thenReturn(false);
+
+        filter().doFilter(
+                request,
+                new MockHttpServletResponse(),
+                new MockFilterChain()
+        );
+
+        verify(jwtTokenProvider).validateToken("header-token");
+        verify(jwtTokenProvider, never()).validateToken("cookie-token");
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
     void nonBearerAuthorizationDoesNotAuthenticate() throws Exception {
         filter().doFilter(
                 requestWithAuthorization("Basic credentials"),
@@ -98,8 +150,31 @@ class JwtAuthenticationFilterTest {
         verify(userRepository, never()).findByEmail(org.mockito.ArgumentMatchers.anyString());
     }
 
+    @Test
+    void invalidCookieTokenDoesNotAuthenticate() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie(
+                JwtCookieProvider.ACCESS_TOKEN_COOKIE_NAME,
+                "invalid-cookie-token"
+        ));
+        when(jwtTokenProvider.validateToken("invalid-cookie-token")).thenReturn(false);
+
+        filter().doFilter(
+                request,
+                new MockHttpServletResponse(),
+                new MockFilterChain()
+        );
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(userRepository, never()).findByEmail(org.mockito.ArgumentMatchers.anyString());
+    }
+
     private JwtAuthenticationFilter filter() {
-        return new JwtAuthenticationFilter(jwtTokenProvider, userRepository);
+        return new JwtAuthenticationFilter(
+                jwtTokenProvider,
+                jwtCookieProvider,
+                userRepository
+        );
     }
 
     private MockHttpServletRequest requestWithAuthorization(String value) {

@@ -1,9 +1,11 @@
 package com.taehyun.storyseed.config;
 
 import com.taehyun.storyseed.config.jwt.JwtAuthenticationFilter;
+import com.taehyun.storyseed.config.jwt.JwtCookieProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,6 +35,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationFilter jwtAuthenticationFilter,
+            JwtCookieProvider jwtCookieProvider,
             AuthenticationEntryPoint authenticationEntryPoint
     ) throws Exception {
         http
@@ -46,13 +49,25 @@ public class SecurityConfig {
                                 "/",
                                 "/signup",
                                 "/login",
-                                "/home",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
                                 "/favicon.ico"
                         ).permitAll()
+                        .requestMatchers("/stories/**").authenticated()
                         .anyRequest().authenticated()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .addLogoutHandler((request, response, authentication) ->
+                                response.addHeader(
+                                        HttpHeaders.SET_COOKIE,
+                                        jwtCookieProvider.deleteAccessTokenCookie(
+                                                request.isSecure()
+                                        ).toString()
+                                )
+                        )
+                        .logoutSuccessUrl("/login")
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,

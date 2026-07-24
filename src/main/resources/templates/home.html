@@ -17,7 +17,9 @@
 
     <p id="error-message" class="message error" role="alert"></p>
     <button id="refresh-button" type="button">현재 사용자 조회</button>
-    <button id="logout-button" class="secondary" type="button">로그아웃</button>
+    <form th:action="@{/logout}" method="post">
+        <button class="secondary" type="submit">로그아웃</button>
+    </form>
 </main>
 
 <script>
@@ -25,21 +27,14 @@
     const errorMessage = document.getElementById("error-message");
 
     async function loadCurrentUser() {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-            window.location.href = "/login";
-            return;
-        }
-
         errorMessage.textContent = "";
 
         try {
             const response = await fetch("/api/users/me", {
-                headers: {Authorization: `Bearer ${token}`}
+                credentials: "same-origin"
             });
 
             if (!response.ok) {
-                localStorage.removeItem("accessToken");
                 window.location.href = "/login";
                 return;
             }
@@ -63,11 +58,6 @@
     }
 
     document.getElementById("refresh-button").addEventListener("click", loadCurrentUser);
-    document.getElementById("logout-button").addEventListener("click", () => {
-        localStorage.removeItem("accessToken");
-        window.location.href = "/login";
-    });
-
     loadCurrentUser();
 </script>
 </body>

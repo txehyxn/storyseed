@@ -47,7 +47,8 @@ label {
     font-weight: 600;
 }
 
-input {
+input,
+textarea {
     width: 100%;
     padding: 12px;
     border: 1px solid #d1d5db;
@@ -55,7 +56,12 @@ input {
     font: inherit;
 }
 
-input:focus {
+textarea {
+    resize: vertical;
+}
+
+input:focus,
+textarea:focus {
     border-color: #4f46e5;
     outline: 3px solid rgb(79 70 229 / 15%);
 }

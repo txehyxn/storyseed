@@ -1,6 +1,8 @@
 package com.taehyun.storyseed.user.controller;
 
 import com.taehyun.storyseed.config.jwt.JwtTokenProvider;
+import com.taehyun.storyseed.config.jwt.JwtCookieProvider;
+import jakarta.servlet.http.Cookie;
 import com.taehyun.storyseed.user.domain.User;
 import com.taehyun.storyseed.user.domain.UserRole;
 import com.taehyun.storyseed.user.dto.LoginRequest;
@@ -30,6 +32,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -195,6 +199,22 @@ class UserControllerTest {
 
         performValidLogin()
                 .andExpect(status().isOk())
+                .andExpect(cookie().httpOnly(
+                        JwtCookieProvider.ACCESS_TOKEN_COOKIE_NAME,
+                        true
+                ))
+                .andExpect(cookie().path(
+                        JwtCookieProvider.ACCESS_TOKEN_COOKIE_NAME,
+                        "/"
+                ))
+                .andExpect(cookie().value(
+                        JwtCookieProvider.ACCESS_TOKEN_COOKIE_NAME,
+                        "access-token"
+                ))
+                .andExpect(header().string(
+                        "Set-Cookie",
+                        org.hamcrest.Matchers.containsString("SameSite=Lax")
+                ))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.accessToken").value("access-token"))
@@ -263,6 +283,24 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.data.nickname").value("taehyun"))
                 .andExpect(jsonPath("$.data.role").value("USER"))
                 .andExpect(jsonPath("$.data.password").doesNotExist());
+    }
+
+    @Test
+    void getCurrentUserAcceptsAuthenticationCookie() throws Exception {
+        User user = userRepository.save(User.createLocal(
+                "cookie-user@test.com",
+                "encoded-password",
+                "cookie-user"
+        ));
+        String token = jwtTokenProvider.createAccessToken(user);
+
+        mockMvc.perform(get("/api/users/me")
+                        .cookie(new Cookie(
+                                JwtCookieProvider.ACCESS_TOKEN_COOKIE_NAME,
+                                token
+                        )))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.email").value("cookie-user@test.com"));
     }
 
     @Test

@@ -14,6 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -22,13 +23,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtCookieProvider jwtCookieProvider;
     private final UserRepository userRepository;
 
     public JwtAuthenticationFilter(
             JwtTokenProvider jwtTokenProvider,
+            JwtCookieProvider jwtCookieProvider,
             UserRepository userRepository
     ) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.jwtCookieProvider = jwtCookieProvider;
         this.userRepository = userRepository;
     }
 
@@ -38,15 +42,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        String authorization = request.getHeader(AUTHORIZATION_HEADER);
-
-        if (authorization != null
-                && authorization.startsWith(BEARER_PREFIX)
-                && SecurityContextHolder.getContext().getAuthentication() == null) {
-            authenticate(authorization.substring(BEARER_PREFIX.length()));
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            resolveToken(request).ifPresent(this::authenticate);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private Optional<String> resolveToken(HttpServletRequest request) {
+        String authorization = request.getHeader(AUTHORIZATION_HEADER);
+        if (authorization != null) {
+            if (!authorization.startsWith(BEARER_PREFIX)) {
+                return Optional.empty();
+            }
+
+            String token = authorization.substring(BEARER_PREFIX.length());
+            return token.isBlank() ? Optional.empty() : Optional.of(token);
+        }
+
+        return jwtCookieProvider.resolveAccessToken(request);
     }
 
     private void authenticate(String token) {

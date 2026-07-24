@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>새 이야기 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card">
+    <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
+    <h1>새 이야기 만들기</h1>
+
+    <form th:action="@{/stories}" th:object="${request}" method="post">
+        <label for="title">제목</label>
+        <input
+                id="title"
+                type="text"
+                th:field="*{title}"
+                maxlength="100"
+                placeholder="이야기 제목을 입력하세요"
+                required
+        >
+        <p class="message error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></p>
+
+        <label for="theme">주제</label>
+        <textarea
+                id="theme"
+                th:field="*{theme}"
+                maxlength="500"
+                rows="6"
+                placeholder="이야기의 주제를 입력하세요"
+                required
+        ></textarea>
+        <p class="message error" th:if="${#fields.hasErrors('theme')}" th:errors="*{theme}"></p>
+
+        <button type="submit">이야기 만들기</button>
+    </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${story.title + ' | StorySeed'}">이야기 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card">
+    <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
+    <h1 th:text="${story.title}">이야기 제목</h1>
+
+    <section class="user-info">
+        <p><strong>주제</strong></p>
+        <p th:text="${story.theme}">이야기 주제</p>
+        <p><strong>상태</strong></p>
+        <p th:text="${story.status}">IN_PROGRESS</p>
+    </section>
+</main>
+</body>
+</html>
