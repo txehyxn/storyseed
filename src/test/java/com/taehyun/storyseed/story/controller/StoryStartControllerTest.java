@@ -15,9 +15,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -72,8 +74,22 @@ class StoryStartControllerTest {
                 .andExpect(content().string(containsString("이야기 씨앗으로 만들기")))
                 .andExpect(content().string(containsString("이어서 쓰기")))
                 .andExpect(content().string(containsString("href=\"/stories/new\"")))
+                .andExpect(content().string(containsString("href=\"/story/classics\"")))
                 .andExpect(content().string(containsString("사용 가능")))
                 .andExpect(content().string(containsString("준비 중")));
+    }
+
+    @Test
+    void classicSelectionPageShowsTenStories() throws Exception {
+        mockMvc.perform(get("/story/classics").cookie(accessTokenCookie))
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/classics"))
+                .andExpect(model().attribute("classicStories", hasSize(10)))
+                .andExpect(content().string(containsString("<h1>명작 다시 쓰기</h1>")))
+                .andExpect(content().string(containsString("흥부와 놀부")))
+                .andExpect(content().string(containsString("홍길동전")))
+                .andExpect(content().string(containsString("이 이야기 선택")))
+                .andExpect(content().string(containsString("mode=classic-remake")));
     }
 
     @Test

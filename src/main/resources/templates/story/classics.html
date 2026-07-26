@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>명작 다시 쓰기 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card classics-page">
+    <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
+    <header class="start-header">
+        <h1>명작 다시 쓰기</h1>
+        <p>익숙한 이야기를<br>당신의 선택으로 새롭게 바꿔 보세요.</p>
+    </header>
+
+    <section class="classic-stories" aria-label="다시 쓸 명작 선택">
+        <article class="classic-story-card" th:each="classic : ${classicStories}">
+            <h2 th:text="${classic.title}">흥부와 놀부</h2>
+            <p th:text="${classic.description}">욕심과 나눔을 다룬 대표적인 고전 이야기</p>
+            <a class="option-link primary-link"
+               th:href="@{/story/coming-soon(mode='classic-remake',classic=${classic.id})}"
+               href="/story/coming-soon?mode=classic-remake">이 이야기 선택</a>
+        </article>
+    </section>
+
+    <a class="back-link" th:href="@{/story/start}" href="/story/start">이야기 시작으로 돌아가기</a>
+</main>
+</body>
+</html>

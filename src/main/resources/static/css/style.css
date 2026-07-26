@@ -210,6 +210,10 @@ button.secondary {
     width: min(100%, 1040px);
 }
 
+.classics-page {
+    width: min(100%, 1040px);
+}
+
 .start-header {
     margin-bottom: 28px;
 }
@@ -229,6 +233,12 @@ button.secondary {
     gap: 16px;
 }
 
+.classic-stories {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
 .start-option-card {
     display: flex;
     min-height: 240px;
@@ -237,6 +247,39 @@ button.secondary {
     border: 1px solid #d1d5db;
     border-radius: 12px;
     background: #f9fafb;
+}
+
+.classic-story-card {
+    display: flex;
+    min-height: 220px;
+    flex-direction: column;
+    padding: 22px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+.classic-story-card h2 {
+    margin: 0 0 10px;
+    font-size: 1.2rem;
+}
+
+.classic-story-card p {
+    margin: 0 0 20px;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.classic-story-card .option-link {
+    margin-top: auto;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 24px;
+    color: #4f46e5;
+    font-weight: 700;
+    text-decoration: none;
 }
 
 .start-option-card.available {
@@ -295,10 +338,18 @@ button.secondary {
     .start-options {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .classic-stories {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (min-width: 900px) {
     .start-options {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .classic-stories {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
