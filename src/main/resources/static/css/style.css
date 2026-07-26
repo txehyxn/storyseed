@@ -239,6 +239,54 @@ button.secondary {
     gap: 16px;
 }
 
+.selected-classic {
+    margin-bottom: 24px;
+    padding: 20px;
+    border-left: 4px solid #4f46e5;
+    background: #eef2ff;
+}
+
+.selected-classic h2 {
+    margin: 0 0 8px;
+}
+
+.selected-classic p {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.remake-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+.remake-option-card {
+    display: flex;
+    min-height: 220px;
+    flex-direction: column;
+    padding: 22px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+.remake-option-card h3 {
+    margin: 0 0 10px;
+    font-size: 1.15rem;
+}
+
+.remake-option-card p {
+    margin: 0 0 20px;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.remake-option-card .option-link {
+    margin-top: auto;
+}
+
 .start-option-card {
     display: flex;
     min-height: 240px;
@@ -340,6 +388,10 @@ button.secondary {
     }
 
     .classic-stories {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .remake-options {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }

@@ -19,8 +19,8 @@
             <h2 th:text="${classic.title}">흥부와 놀부</h2>
             <p th:text="${classic.description}">욕심과 나눔을 다룬 대표적인 고전 이야기</p>
             <a class="option-link primary-link"
-               th:href="@{/story/coming-soon(mode='classic-remake',classic=${classic.id})}"
-               href="/story/coming-soon?mode=classic-remake">이 이야기 선택</a>
+               th:href="@{/story/classics/{classicId}(classicId=${classic.id})}"
+               href="/story/classics/heungbu-nolbu">이 이야기 선택</a>
         </article>
     </section>
 

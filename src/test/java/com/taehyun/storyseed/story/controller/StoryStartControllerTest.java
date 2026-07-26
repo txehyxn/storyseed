@@ -20,6 +20,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -89,7 +90,36 @@ class StoryStartControllerTest {
                 .andExpect(content().string(containsString("흥부와 놀부")))
                 .andExpect(content().string(containsString("홍길동전")))
                 .andExpect(content().string(containsString("이 이야기 선택")))
-                .andExpect(content().string(containsString("mode=classic-remake")));
+                .andExpect(content().string(containsString("href=\"/story/classics/heungbu-nolbu\"")))
+                .andExpect(content().string(containsString("href=\"/story/classics/honggildong\"")));
+    }
+
+    @Test
+    void classicRemakeOptionsPageShowsSelectedClassicAndFiveOptions() throws Exception {
+        mockMvc.perform(get("/story/classics/heungbu-nolbu").cookie(accessTokenCookie))
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/classic-options"))
+                .andExpect(model().attribute("remakeOptions", hasSize(5)))
+                .andExpect(content().string(containsString("흥부와 놀부")))
+                .andExpect(content().string(containsString("욕심과 나눔을 다룬 대표적인 고전 이야기")))
+                .andExpect(content().string(containsString("주인공 바꾸기")))
+                .andExpect(content().string(containsString("시대 바꾸기")))
+                .andExpect(content().string(containsString("결말 바꾸기")))
+                .andExpect(content().string(containsString("악역 시점")))
+                .andExpect(content().string(containsString("AI에게 맡기기")))
+                .andExpect(content().string(containsString("classic=heungbu-nolbu")))
+                .andExpect(content().string(containsString("type=hero")))
+                .andExpect(content().string(containsString("type=era")))
+                .andExpect(content().string(containsString("type=ending")))
+                .andExpect(content().string(containsString("type=villain")))
+                .andExpect(content().string(containsString("type=ai")));
+    }
+
+    @Test
+    void classicRemakeOptionsPageRedirectsUnknownClassicToList() throws Exception {
+        mockMvc.perform(get("/story/classics/not-found").cookie(accessTokenCookie))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/story/classics"));
     }
 
     @Test

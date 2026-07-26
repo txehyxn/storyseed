@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>리메이크 방식 선택 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card classics-page">
+    <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
+    <header class="start-header">
+        <h1>명작 다시 쓰기</h1>
+        <p>이 이야기를 어떻게 새롭게 바꾸고 싶나요?</p>
+    </header>
+
+    <section class="selected-classic" aria-label="선택한 명작">
+        <h2 th:text="${classicStory.title}">흥부와 놀부</h2>
+        <p th:text="${classicStory.description}">욕심과 나눔을 다룬 대표적인 고전 이야기</p>
+    </section>
+
+    <section class="remake-options" aria-label="리메이크 방식 선택">
+        <article class="remake-option-card" th:each="option : ${remakeOptions}">
+            <h3 th:text="${option.title}">주인공 바꾸기</h3>
+            <p th:text="${option.description}">다른 인물을 주인공으로 이야기를 새롭게 바라봅니다.</p>
+            <a class="option-link primary-link"
+               th:href="@{/story/coming-soon(mode='classic-remake',classic=${classicStory.id},type=${option.type})}"
+               href="/story/coming-soon?mode=classic-remake&amp;classic=heungbu-nolbu&amp;type=hero">이 방식 선택</a>
+        </article>
+    </section>
+
+    <a class="back-link" th:href="@{/story/classics}" href="/story/classics">명작 목록으로 돌아가기</a>
+</main>
+</body>
+</html>

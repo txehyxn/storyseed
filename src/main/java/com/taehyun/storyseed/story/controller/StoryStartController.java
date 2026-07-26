@@ -3,6 +3,7 @@ package com.taehyun.storyseed.story.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -25,6 +26,14 @@ public class StoryStartController {
             new ClassicStory("cinderella", "신데렐라", "용기와 친절로 운명을 바꾼 소녀의 이야기")
     );
 
+    private static final List<RemakeOption> REMAKE_OPTIONS = List.of(
+            new RemakeOption("hero", "주인공 바꾸기", "다른 인물을 주인공으로 삼아 이야기를 새롭게 바라봅니다."),
+            new RemakeOption("era", "시대 바꾸기", "이야기의 배경을 현대나 미래 등 새로운 시대로 옮깁니다."),
+            new RemakeOption("ending", "결말 바꾸기", "익숙한 이야기의 끝을 전혀 다른 방향으로 바꿉니다."),
+            new RemakeOption("villain", "악역 시점", "악역의 입장에서 사건과 인물들을 다시 바라봅니다."),
+            new RemakeOption("ai", "AI에게 맡기기", "AI가 가장 흥미로운 방향으로 이야기를 다시 만듭니다.")
+    );
+
     @GetMapping("/start")
     public String start() {
         return "story/start";
@@ -34,6 +43,25 @@ public class StoryStartController {
     public String showClassicStories(Model model) {
         model.addAttribute("classicStories", CLASSIC_STORIES);
         return "story/classics";
+    }
+
+    @GetMapping("/classics/{classicId}")
+    public String showClassicRemakeOptions(
+            @PathVariable String classicId,
+            Model model
+    ) {
+        ClassicStory classicStory = CLASSIC_STORIES.stream()
+                .filter(classic -> classic.id().equals(classicId))
+                .findFirst()
+                .orElse(null);
+
+        if (classicStory == null) {
+            return "redirect:/story/classics";
+        }
+
+        model.addAttribute("classicStory", classicStory);
+        model.addAttribute("remakeOptions", REMAKE_OPTIONS);
+        return "story/classic-options";
     }
 
     @GetMapping("/coming-soon")
@@ -61,5 +89,8 @@ public class StoryStartController {
     }
 
     public record ClassicStory(String id, String title, String description) {
+    }
+
+    public record RemakeOption(String type, String title, String description) {
     }
 }
