@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI 추천 이야기 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card story-card">
+    <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
+    <h1>AI 추천 이야기</h1>
+    <p>원하는 이야기 취향을 선택하면 어울리는 첫 이야기를 추천합니다.</p>
+
+    <form class="world-form"
+          th:action="@{/stories}"
+          th:object="${request}"
+          method="post">
+        <input type="hidden" name="generationMode" value="AI_RECOMMENDATION">
+
+        <label for="mood">원하는 분위기</label>
+        <select id="mood" th:field="*{mood}">
+            <option value="">분위기를 선택하세요</option>
+            <option th:each="moodOption : ${recommendationMoods}"
+                    th:value="${moodOption.name()}"
+                    th:text="${moodOption.displayName}">따뜻한</option>
+        </select>
+
+        <label for="pacing">이야기 속도</label>
+        <select id="pacing" th:field="*{pacing}">
+            <option value="">이야기 속도를 선택하세요</option>
+            <option th:each="pacingOption : ${storyPacings}"
+                    th:value="${pacingOption.name()}"
+                    th:text="${pacingOption.displayName}">균형 잡힌 전개</option>
+        </select>
+
+        <label for="protagonistType">주인공 유형</label>
+        <select id="protagonistType" th:field="*{protagonistType}">
+            <option value="">주인공 유형을 선택하세요</option>
+            <option th:each="type : ${protagonistTypes}"
+                    th:value="${type.name()}"
+                    th:text="${type.displayName}">평범하지만 용감한 인물</option>
+        </select>
+
+        <p class="message error"
+           th:if="${#fields.hasAnyErrors()}"
+           th:each="error : ${#fields.allErrors()}"
+           th:text="${error}"></p>
+
+        <button type="submit">이야기 추천받기</button>
+    </form>
+
+    <a class="back-link" th:href="@{/story/start}" href="/story/start">이야기 시작으로 돌아가기</a>
+</main>
+</body>
+</html>

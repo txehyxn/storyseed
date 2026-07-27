@@ -5,10 +5,12 @@ import com.taehyun.storyseed.story.domain.Chapter;
 import com.taehyun.storyseed.story.domain.Choice;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
+import com.taehyun.storyseed.story.dto.CreateAiRecommendationRequest;
 import com.taehyun.storyseed.story.dto.StoryDetailView;
 import com.taehyun.storyseed.story.generation.GeneratedStoryResult;
 import com.taehyun.storyseed.story.generation.StoryGenerationRequest;
 import com.taehyun.storyseed.story.generation.StoryGenerationService;
+import com.taehyun.storyseed.story.generation.RecommendationMood;
 import com.taehyun.storyseed.story.repository.ChapterRepository;
 import com.taehyun.storyseed.story.repository.ChoiceRepository;
 import com.taehyun.storyseed.story.repository.StoryRepository;
@@ -90,6 +92,40 @@ public class StoryService {
         storyRepository.updateTitle(story.getId(), generatedStory.title());
         saveOpening(story, generatedStory.content(), generatedStory.choices());
         return story;
+    }
+
+    @Transactional
+    public Story createAiRecommendationStory(
+            User user,
+            CreateAiRecommendationRequest request
+    ) {
+        validateUser(user);
+        java.util.List<com.taehyun.storyseed.story.domain.Genre> genres =
+                java.util.List.of(resolveRecommendationGenre(request.mood()));
+        Story story = storyRepository.save(Story.create(user, genres));
+        GeneratedStoryResult generatedStory = storyGenerationService.generate(
+                StoryGenerationRequest.aiRecommendation(
+                        genres,
+                        request.mood(),
+                        request.pacing(),
+                        request.protagonistType()
+                )
+        );
+        storyRepository.updateTitle(story.getId(), generatedStory.title());
+        saveOpening(story, generatedStory.content(), generatedStory.choices());
+        return story;
+    }
+
+    private com.taehyun.storyseed.story.domain.Genre resolveRecommendationGenre(
+            RecommendationMood mood
+    ) {
+        return switch (mood) {
+            case WARM -> com.taehyun.storyseed.story.domain.Genre.SLICE_OF_LIFE;
+            case MYSTERIOUS -> com.taehyun.storyseed.story.domain.Genre.FANTASY;
+            case TENSE -> com.taehyun.storyseed.story.domain.Genre.MYSTERY;
+            case CHEERFUL -> com.taehyun.storyseed.story.domain.Genre.COMEDY;
+            case MOVING -> com.taehyun.storyseed.story.domain.Genre.ROMANCE;
+        };
     }
 
     private void saveOpening(

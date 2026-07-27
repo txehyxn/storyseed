@@ -77,6 +77,7 @@ class StoryStartControllerTest {
                 .andExpect(content().string(containsString("href=\"/stories/new\"")))
                 .andExpect(content().string(containsString("href=\"/story/classics\"")))
                 .andExpect(content().string(containsString("href=\"/story/world\"")))
+                .andExpect(content().string(containsString("href=\"/story/recommendation\"")))
                 .andExpect(content().string(containsString("사용 가능")))
                 .andExpect(content().string(containsString("준비 중")));
     }
@@ -94,6 +95,30 @@ class StoryStartControllerTest {
                 .andExpect(content().string(containsString("판타지")))
                 .andExpect(content().string(containsString("근미래")))
                 .andExpect(content().string(containsString("세계 만들기")))
+                .andExpect(content().string(containsString("name=\"_csrf\"")));
+    }
+
+    @Test
+    void aiRecommendationPageShowsPreferenceOptionsAndCsrfToken() throws Exception {
+        mockMvc.perform(get("/story/recommendation").cookie(accessTokenCookie))
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/recommendation"))
+                .andExpect(model().attributeExists(
+                        "request",
+                        "recommendationMoods",
+                        "storyPacings",
+                        "protagonistTypes"
+                ))
+                .andExpect(content().string(containsString("action=\"/stories\"")))
+                .andExpect(content().string(containsString(
+                        "name=\"generationMode\" value=\"AI_RECOMMENDATION\""
+                )))
+                .andExpect(content().string(containsString("따뜻한")))
+                .andExpect(content().string(containsString("신비로운")))
+                .andExpect(content().string(containsString("느긋한 전개")))
+                .andExpect(content().string(containsString("빠른 전개")))
+                .andExpect(content().string(containsString("비밀을 가진 인물")))
+                .andExpect(content().string(containsString("정의로운 영웅")))
                 .andExpect(content().string(containsString("name=\"_csrf\"")));
     }
 

@@ -12,7 +12,10 @@ public record StoryGenerationRequest(
         String worldName,
         WorldTheme worldTheme,
         WorldEra worldEra,
-        String protagonistName
+        String protagonistName,
+        RecommendationMood recommendationMood,
+        StoryPacing storyPacing,
+        ProtagonistType protagonistType
 ) {
 
     public StoryGenerationRequest {
@@ -23,6 +26,9 @@ public record StoryGenerationRequest(
         return new StoryGenerationRequest(
                 StoryGenerationMode.GENRE,
                 genres,
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -45,6 +51,9 @@ public record StoryGenerationRequest(
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
                 null
         );
     }
@@ -64,7 +73,31 @@ public record StoryGenerationRequest(
                 worldName,
                 worldTheme,
                 worldEra,
-                protagonistName
+                protagonistName,
+                null,
+                null,
+                null
+        );
+    }
+
+    public static StoryGenerationRequest aiRecommendation(
+            List<Genre> genres,
+            RecommendationMood recommendationMood,
+            StoryPacing storyPacing,
+            ProtagonistType protagonistType
+    ) {
+        return new StoryGenerationRequest(
+                StoryGenerationMode.AI_RECOMMENDATION,
+                genres,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                recommendationMood,
+                storyPacing,
+                protagonistType
         );
     }
 }

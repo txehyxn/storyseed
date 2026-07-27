@@ -1,6 +1,10 @@
 package com.taehyun.storyseed.story.controller;
 
 import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
+import com.taehyun.storyseed.story.dto.CreateAiRecommendationRequest;
+import com.taehyun.storyseed.story.generation.ProtagonistType;
+import com.taehyun.storyseed.story.generation.RecommendationMood;
+import com.taehyun.storyseed.story.generation.StoryPacing;
 import com.taehyun.storyseed.story.generation.WorldEra;
 import com.taehyun.storyseed.story.generation.WorldTheme;
 import org.springframework.stereotype.Controller;
@@ -61,6 +65,22 @@ public class StoryStartController {
     static void addCustomWorldOptions(Model model) {
         model.addAttribute("worldThemes", WorldTheme.values());
         model.addAttribute("worldEras", WorldEra.values());
+    }
+
+    @GetMapping("/recommendation")
+    public String showAiRecommendationForm(Model model) {
+        model.addAttribute(
+                "request",
+                new CreateAiRecommendationRequest(null, null, null)
+        );
+        addAiRecommendationOptions(model);
+        return "story/recommendation";
+    }
+
+    static void addAiRecommendationOptions(Model model) {
+        model.addAttribute("recommendationMoods", RecommendationMood.values());
+        model.addAttribute("storyPacings", StoryPacing.values());
+        model.addAttribute("protagonistTypes", ProtagonistType.values());
     }
 
     @GetMapping("/classics/{classicId}")

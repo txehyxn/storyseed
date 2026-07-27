@@ -4,6 +4,7 @@ import com.taehyun.storyseed.story.domain.Story;
 import com.taehyun.storyseed.story.domain.Genre;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
+import com.taehyun.storyseed.story.dto.CreateAiRecommendationRequest;
 import com.taehyun.storyseed.story.service.StoryService;
 import com.taehyun.storyseed.user.domain.User;
 import jakarta.validation.Valid;
@@ -35,7 +36,10 @@ public class StoryController {
         return "story/new";
     }
 
-    @PostMapping(params = "generationMode!=CUSTOM_WORLD")
+    @PostMapping(params = {
+            "generationMode!=CUSTOM_WORLD",
+            "generationMode!=AI_RECOMMENDATION"
+    })
     public String createStory(
             @AuthenticationPrincipal User user,
             @Valid @ModelAttribute("request") CreateStoryRequest request,
@@ -99,6 +103,22 @@ public class StoryController {
         }
 
         Story story = storyService.createCustomWorldStory(user, request);
+        return "redirect:/stories/" + story.getId();
+    }
+
+    @PostMapping(params = "generationMode=AI_RECOMMENDATION")
+    public String createAiRecommendationStory(
+            @AuthenticationPrincipal User user,
+            @Valid @ModelAttribute("request") CreateAiRecommendationRequest request,
+            BindingResult bindingResult,
+            Model model
+    ) {
+        if (bindingResult.hasErrors()) {
+            StoryStartController.addAiRecommendationOptions(model);
+            return "story/recommendation";
+        }
+
+        Story story = storyService.createAiRecommendationStory(user, request);
         return "redirect:/stories/" + story.getId();
     }
 

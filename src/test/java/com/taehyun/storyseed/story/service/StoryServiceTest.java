@@ -6,11 +6,15 @@ import com.taehyun.storyseed.story.domain.Genre;
 import com.taehyun.storyseed.story.domain.Story;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
+import com.taehyun.storyseed.story.dto.CreateAiRecommendationRequest;
 import com.taehyun.storyseed.story.generation.GeneratedStoryResult;
 import com.taehyun.storyseed.story.generation.StoryGenerationMode;
 import com.taehyun.storyseed.story.generation.StoryGenerationRequest;
 import com.taehyun.storyseed.story.generation.WorldEra;
 import com.taehyun.storyseed.story.generation.WorldTheme;
+import com.taehyun.storyseed.story.generation.ProtagonistType;
+import com.taehyun.storyseed.story.generation.RecommendationMood;
+import com.taehyun.storyseed.story.generation.StoryPacing;
 import com.taehyun.storyseed.story.generation.StoryGenerationService;
 import com.taehyun.storyseed.story.repository.ChapterRepository;
 import com.taehyun.storyseed.story.repository.ChoiceRepository;
@@ -200,6 +204,41 @@ class StoryServiceTest {
                 result.getId(),
                 "아르카디아: 붉은 달의 시작"
         );
+        verify(chapterRepository).save(any(Chapter.class));
+        verify(choiceRepository, org.mockito.Mockito.times(2)).save(any(Choice.class));
+    }
+
+    @Test
+    void createAiRecommendationStoryUsesPreferencesAndExistingPipeline() {
+        User user = createUser();
+        CreateAiRecommendationRequest request = new CreateAiRecommendationRequest(
+                RecommendationMood.MYSTERIOUS,
+                StoryPacing.BALANCED,
+                ProtagonistType.SECRETIVE
+        );
+        when(storyRepository.save(any(Story.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(storyGenerationService.generate(any(StoryGenerationRequest.class)))
+                .thenReturn(new GeneratedStoryResult(
+                        "달이 사라진 밤의 아이",
+                        "밤마다 열리는 문 앞에 비밀을 가진 인물이 섰다.",
+                        List.of("문을 연다.", "안내자를 조사한다.")
+                ));
+        when(chapterRepository.save(any(Chapter.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Story result = storyService.createAiRecommendationStory(user, request);
+
+        assertEquals(List.of(Genre.FANTASY), result.getGenres());
+        ArgumentCaptor<StoryGenerationRequest> generationRequestCaptor =
+                ArgumentCaptor.forClass(StoryGenerationRequest.class);
+        verify(storyGenerationService).generate(generationRequestCaptor.capture());
+        StoryGenerationRequest generationRequest = generationRequestCaptor.getValue();
+        assertEquals(StoryGenerationMode.AI_RECOMMENDATION, generationRequest.mode());
+        assertEquals(RecommendationMood.MYSTERIOUS, generationRequest.recommendationMood());
+        assertEquals(StoryPacing.BALANCED, generationRequest.storyPacing());
+        assertEquals(ProtagonistType.SECRETIVE, generationRequest.protagonistType());
+        verify(storyRepository).updateTitle(result.getId(), "달이 사라진 밤의 아이");
         verify(chapterRepository).save(any(Chapter.class));
         verify(choiceRepository, org.mockito.Mockito.times(2)).save(any(Choice.class));
     }

@@ -6,6 +6,7 @@ import com.taehyun.storyseed.story.domain.Genre;
 import com.taehyun.storyseed.story.domain.Story;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
+import com.taehyun.storyseed.story.dto.CreateAiRecommendationRequest;
 import com.taehyun.storyseed.story.dto.StoryDetailView;
 import com.taehyun.storyseed.story.service.StoryService;
 import com.taehyun.storyseed.user.domain.User;
@@ -13,11 +14,14 @@ import com.taehyun.storyseed.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -230,6 +234,69 @@ class StoryControllerTest {
     }
 
     @Test
+    void createAiRecommendationStoryRedirectsToCreatedStory() throws Exception {
+        Story story = mock(Story.class);
+        when(story.getId()).thenReturn(40L);
+        when(storyService.createAiRecommendationStory(
+                any(User.class),
+                any(CreateAiRecommendationRequest.class)
+        )).thenReturn(story);
+
+        mockMvc.perform(validAiRecommendationRequest())
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/stories/40"));
+
+        verify(storyService).createAiRecommendationStory(
+                any(User.class),
+                any(CreateAiRecommendationRequest.class)
+        );
+        verify(storyService, never()).createStory(any(), any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"mood", "pacing", "protagonistType"})
+    void createAiRecommendationStoryRejectsMissingPreference(
+            String missingField
+    ) throws Exception {
+        MockHttpServletRequestBuilder request = post("/stories")
+                .cookie(accessTokenCookie)
+                .with(csrf())
+                .param("generationMode", "AI_RECOMMENDATION");
+        if (!"mood".equals(missingField)) {
+            request.param("mood", "MYSTERIOUS");
+        }
+        if (!"pacing".equals(missingField)) {
+            request.param("pacing", "BALANCED");
+        }
+        if (!"protagonistType".equals(missingField)) {
+            request.param("protagonistType", "SECRETIVE");
+        }
+
+        mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/recommendation"))
+                .andExpect(model().attributeHasFieldErrors("request", missingField));
+
+        verify(storyService, never()).createAiRecommendationStory(any(), any());
+    }
+
+    @Test
+    void createAiRecommendationStoryRejectsUnknownEnumValue() throws Exception {
+        mockMvc.perform(post("/stories")
+                        .cookie(accessTokenCookie)
+                        .with(csrf())
+                        .param("generationMode", "AI_RECOMMENDATION")
+                        .param("mood", "UNKNOWN")
+                        .param("pacing", "BALANCED")
+                        .param("protagonistType", "SECRETIVE"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/recommendation"))
+                .andExpect(model().attributeHasFieldErrors("request", "mood"));
+
+        verify(storyService, never()).createAiRecommendationStory(any(), any());
+    }
+
+    @Test
     void createStoryRejectsRequestWithoutCsrfToken() throws Exception {
         mockMvc.perform(post("/stories")
                         .cookie(accessTokenCookie)
@@ -322,5 +389,15 @@ class StoryControllerTest {
 
         mockMvc.perform(get("/stories/10").cookie(accessTokenCookie))
                 .andExpect(status().isBadRequest());
+    }
+
+    private MockHttpServletRequestBuilder validAiRecommendationRequest() {
+        return post("/stories")
+                .cookie(accessTokenCookie)
+                .with(csrf())
+                .param("generationMode", "AI_RECOMMENDATION")
+                .param("mood", "MYSTERIOUS")
+                .param("pacing", "BALANCED")
+                .param("protagonistType", "SECRETIVE");
     }
 }
