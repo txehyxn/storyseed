@@ -411,3 +411,452 @@ button.secondary {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+
+/* Public landing page */
+.landing-body {
+    display: block;
+    padding: 0;
+    color: #17201d;
+    background: #f7f5ef;
+    font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
+}
+
+.landing-nav {
+    position: absolute;
+    z-index: 5;
+    top: 0;
+    left: 0;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px clamp(22px, 5vw, 84px);
+    color: #ffffff;
+}
+
+.landing-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: inherit;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.logo-mark {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    color: #17201d;
+    background: #f2c56b;
+    border-radius: 50%;
+    font-size: 1rem;
+}
+
+.landing-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.landing-nav-actions a {
+    padding: 10px 16px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.nav-signup {
+    border: 1px solid rgb(255 255 255 / 55%);
+    border-radius: 6px;
+    background: rgb(10 18 18 / 48%);
+}
+
+.landing-hero {
+    position: relative;
+    display: flex;
+    min-height: min(860px, 92vh);
+    align-items: center;
+    overflow: hidden;
+    color: #ffffff;
+    background-color: #101919;
+    background-image: url("/images/storyseed-hero.png");
+    background-position: center;
+    background-size: cover;
+}
+
+.hero-shade {
+    position: absolute;
+    inset: 0;
+    background: rgb(5 12 13 / 35%);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    width: min(92%, 650px);
+    margin-left: clamp(24px, 7vw, 120px);
+    padding: 112px 0 92px;
+}
+
+.hero-kicker,
+.section-heading p,
+.choice-copy p,
+.landing-cta p {
+    margin: 0 0 18px;
+    color: #f2c56b;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.landing-hero h1 {
+    max-width: 650px;
+    margin: 0;
+    font-family: Georgia, "Noto Serif KR", serif;
+    font-size: clamp(2.45rem, 5.2vw, 4.7rem);
+    line-height: 1.12;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+}
+
+.hero-copy {
+    max-width: 590px;
+    margin: 26px 0 0;
+    color: rgb(255 255 255 / 82%);
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 34px;
+}
+
+.hero-actions a {
+    padding: 14px 22px;
+    border-radius: 6px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.hero-primary {
+    color: #17201d;
+    background: #f2c56b;
+}
+
+.hero-primary:hover {
+    background: #ffd884;
+}
+
+.hero-secondary {
+    color: #ffffff;
+    border: 1px solid rgb(255 255 255 / 55%);
+    background: rgb(7 15 15 / 58%);
+}
+
+.hero-example {
+    display: grid;
+    gap: 6px;
+    max-width: 580px;
+    margin-top: 42px;
+    padding-left: 17px;
+    border-left: 2px solid #d96f52;
+}
+
+.hero-example span {
+    color: rgb(255 255 255 / 60%);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.hero-example strong {
+    color: #ffffff;
+    font-family: Georgia, "Noto Serif KR", serif;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.next-section-link {
+    position: absolute;
+    z-index: 2;
+    right: clamp(24px, 5vw, 80px);
+    bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: rgb(255 255 255 / 75%);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.landing-ways {
+    padding: 92px clamp(22px, 6vw, 100px) 110px;
+}
+
+.section-heading {
+    max-width: 680px;
+    margin-bottom: 42px;
+}
+
+.section-heading p,
+.choice-copy p,
+.landing-cta p {
+    color: #a44732;
+}
+
+.section-heading h2,
+.choice-copy h2,
+.landing-cta h2 {
+    margin: 0;
+    font-family: Georgia, "Noto Serif KR", serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1.25;
+    letter-spacing: 0;
+}
+
+.way-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.way-card {
+    display: flex;
+    min-height: 260px;
+    grid-column: span 4;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px;
+    border: 1px solid #d8d5cc;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.way-card:nth-child(4),
+.way-card:nth-child(5) {
+    grid-column: span 6;
+}
+
+.way-featured {
+    color: #ffffff;
+    border-color: #1d5b52;
+    background: #1d5b52;
+}
+
+.way-number {
+    color: #ba624b;
+    font-family: Georgia, serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.way-featured .way-number {
+    color: #f2c56b;
+}
+
+.way-card h3 {
+    margin: 34px 0 10px;
+    font-family: Georgia, "Noto Serif KR", serif;
+    font-size: 1.45rem;
+}
+
+.way-card p {
+    margin: 0;
+    color: #646962;
+    line-height: 1.7;
+}
+
+.way-featured p {
+    color: rgb(255 255 255 / 75%);
+}
+
+.way-tag {
+    margin-top: 28px;
+    color: #777b75;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.way-featured .way-tag {
+    color: #f2c56b;
+}
+
+.landing-choice {
+    display: grid;
+    grid-template-columns: minmax(240px, 0.8fr) minmax(300px, 1.2fr);
+    gap: clamp(40px, 8vw, 130px);
+    padding: 100px clamp(22px, 7vw, 120px);
+    color: #ffffff;
+    background: #172c29;
+}
+
+.choice-scene {
+    padding: 6px 0;
+}
+
+.choice-scene > p {
+    margin: 0 0 30px;
+    font-family: Georgia, "Noto Serif KR", serif;
+    font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+    line-height: 1.65;
+}
+
+.choice-buttons {
+    display: grid;
+    gap: 10px;
+}
+
+.choice-buttons span {
+    padding: 16px 18px;
+    border: 1px solid rgb(255 255 255 / 25%);
+    border-radius: 6px;
+    color: rgb(255 255 255 / 80%);
+    background: rgb(255 255 255 / 5%);
+}
+
+.choice-buttons span:first-child {
+    color: #17201d;
+    border-color: #f2c56b;
+    background: #f2c56b;
+}
+
+.landing-cta {
+    padding: 100px 22px;
+    text-align: center;
+    background: #eee9de;
+}
+
+.landing-cta a {
+    display: inline-block;
+    margin-top: 32px;
+    padding: 15px 24px;
+    border-radius: 6px;
+    color: #ffffff;
+    background: #a44732;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.landing-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px clamp(22px, 6vw, 100px);
+    color: #d4d8d3;
+    background: #101918;
+}
+
+.landing-footer p {
+    margin: 0;
+    font-size: 0.82rem;
+}
+
+.footer-logo {
+    color: #ffffff;
+}
+
+@media (max-width: 760px) {
+    .landing-nav {
+        padding: 16px 18px;
+    }
+
+    .landing-logo {
+        min-width: 0;
+        font-size: 1rem;
+    }
+
+    .logo-mark {
+        width: 30px;
+        height: 30px;
+    }
+
+    .landing-nav-actions {
+        min-width: 0;
+        gap: 2px;
+    }
+
+    .landing-nav-actions a {
+        padding: 9px 10px;
+        font-size: 0.8rem;
+    }
+
+    .nav-login {
+        display: none;
+    }
+
+    .landing-hero {
+        min-height: 760px;
+        align-items: flex-end;
+        background-position: 62% center;
+    }
+
+    .hero-shade {
+        background: rgb(5 12 13 / 58%);
+    }
+
+    .hero-content {
+        width: calc(100% - 44px);
+        max-width: calc(100% - 44px);
+        margin: 0;
+        padding: 120px 0 84px;
+        margin-inline: 22px;
+    }
+
+    .landing-hero h1 {
+        font-size: clamp(2.35rem, 11vw, 3.2rem);
+    }
+
+    .hero-copy {
+        font-size: 0.96rem;
+        overflow-wrap: anywhere;
+    }
+
+    .hero-example {
+        margin-top: 30px;
+        overflow-wrap: anywhere;
+    }
+
+    .next-section-link {
+        display: none;
+    }
+
+    .landing-ways {
+        padding: 70px 18px 78px;
+    }
+
+    .way-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .way-card,
+    .way-card:nth-child(4),
+    .way-card:nth-child(5) {
+        min-height: 220px;
+        grid-column: auto;
+    }
+
+    .landing-choice {
+        grid-template-columns: 1fr;
+        padding: 76px 22px;
+    }
+
+    .landing-cta {
+        padding: 76px 22px;
+    }
+
+    .landing-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+    }
+}

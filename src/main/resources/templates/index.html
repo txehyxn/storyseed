@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="당신의 선택으로 이야기가 자라는 인터랙티브 스토리 플랫폼">
+    <title>StorySeed | 선택이 이야기가 되는 곳</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body class="landing-body">
+<header class="landing-nav">
+    <a class="landing-logo" th:href="@{/}" href="/" aria-label="StorySeed 홈">
+        <span class="logo-mark" aria-hidden="true">S</span>
+        <span>StorySeed</span>
+    </a>
+    <nav class="landing-nav-actions" aria-label="계정 메뉴">
+        <a class="nav-login" th:href="@{/login}" href="/login">로그인</a>
+        <a class="nav-signup" th:href="@{/signup}" href="/signup">무료로 시작하기</a>
+    </nav>
+</header>
+
+<main>
+    <section class="landing-hero" aria-labelledby="hero-title">
+        <div class="hero-shade" aria-hidden="true"></div>
+        <div class="hero-content">
+            <p class="hero-kicker">당신의 한 문장에서 시작되는 세계</p>
+            <h1 id="hero-title">선택하는 순간,<br>이야기는 당신의 것이 됩니다.</h1>
+            <p class="hero-copy">
+                장르를 고르고, 명작을 뒤집고, 작은 씨앗을 심어 보세요.
+                StorySeed가 다음 장면을 펼치면 당신의 선택이 이야기의 길을 만듭니다.
+            </p>
+            <div class="hero-actions">
+                <a class="hero-primary" th:href="@{/signup}" href="/signup">내 이야기 시작하기</a>
+                <a class="hero-secondary" th:href="@{/login}" href="/login">계속 쓰러 가기</a>
+            </div>
+            <div class="hero-example" aria-label="이야기 씨앗 예시">
+                <span>오늘의 이야기 씨앗</span>
+                <strong>“달이 사라진 밤, 우체통에서 내일의 편지가 도착했다.”</strong>
+            </div>
+        </div>
+        <a class="next-section-link" href="#ways" aria-label="이야기 시작 방식 보기">
+            <span>상상하는 방법을 골라보세요</span>
+            <span aria-hidden="true">↓</span>
+        </a>
+    </section>
+
+    <section id="ways" class="landing-ways" aria-labelledby="ways-title">
+        <div class="section-heading">
+            <p>다섯 개의 시작, 하나뿐인 이야기</p>
+            <h2 id="ways-title">오늘은 어떤 문을 열어볼까요?</h2>
+        </div>
+
+        <div class="way-grid">
+            <article class="way-card way-featured">
+                <span class="way-number">01</span>
+                <div>
+                    <h3>새로운 이야기</h3>
+                    <p>좋아하는 장르를 골라 아무도 읽지 못한 첫 장면을 만듭니다.</p>
+                </div>
+                <span class="way-tag">장르에서 시작</span>
+            </article>
+            <article class="way-card">
+                <span class="way-number">02</span>
+                <div>
+                    <h3>명작 다시 쓰기</h3>
+                    <p>익숙한 고전의 주인공과 시대, 결말을 새로운 시선으로 바꿉니다.</p>
+                </div>
+                <span class="way-tag">고전을 새롭게</span>
+            </article>
+            <article class="way-card">
+                <span class="way-number">03</span>
+                <div>
+                    <h3>나만의 세계</h3>
+                    <p>세계의 이름과 분위기, 시대와 주인공을 정해 첫 모험을 엽니다.</p>
+                </div>
+                <span class="way-tag">세계관에서 시작</span>
+            </article>
+            <article class="way-card">
+                <span class="way-number">04</span>
+                <div>
+                    <h3>AI 추천 이야기</h3>
+                    <p>원하는 분위기와 속도, 주인공을 고르면 취향에 맞는 이야기를 만납니다.</p>
+                </div>
+                <span class="way-tag">취향에서 시작</span>
+            </article>
+            <article class="way-card">
+                <span class="way-number">05</span>
+                <div>
+                    <h3>이야기 씨앗</h3>
+                    <p>머릿속을 스친 짧은 문장 하나를 살아 움직이는 장면으로 키웁니다.</p>
+                </div>
+                <span class="way-tag">한 문장에서 시작</span>
+            </article>
+        </div>
+    </section>
+
+    <section class="landing-choice">
+        <div class="choice-copy">
+            <p>읽는 사람에서, 만드는 사람으로</p>
+            <h2>정해진 결말은 없습니다.</h2>
+        </div>
+        <div class="choice-scene">
+            <p>낡은 시계탑의 문이 열리고, 안쪽에서 당신의 이름을 부르는 목소리가 들렸다.</p>
+            <div class="choice-buttons" aria-label="이야기 선택 예시">
+                <span>목소리를 따라 안으로 들어간다</span>
+                <span>탑 주변의 흔적부터 살핀다</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-cta">
+        <p>첫 문장은 준비되어 있습니다.</p>
+        <h2>이제 당신의 선택을 들려주세요.</h2>
+        <a th:href="@{/signup}" href="/signup">StorySeed 시작하기</a>
+    </section>
+</main>
+
+<footer class="landing-footer">
+    <a class="landing-logo footer-logo" th:href="@{/}" href="/">
+        <span class="logo-mark" aria-hidden="true">S</span>
+        <span>StorySeed</span>
+    </a>
+    <p>당신의 선택으로 자라는 이야기</p>
+</footer>
+</body>
+</html>

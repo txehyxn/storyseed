@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -53,6 +54,25 @@ class PageControllerTest {
         mockMvc.perform(get("/signup"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("signup"));
+    }
+
+    @Test
+    void landingPageIsPublicAndShowsStorySeedEntryPoints() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("index"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "선택하는 순간,"
+                )))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"/login\""
+                )))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"/signup\""
+                )))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "이야기 씨앗"
+                )));
     }
 
     @Test
