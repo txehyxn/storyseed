@@ -99,6 +99,52 @@ class MockStoryGenerationServiceTest {
         assertEquals(4, results.stream().map(GeneratedChapterResult::content).distinct().count());
     }
 
+    @Test
+    void classicRemakeOpeningAddsSelectedClassicAndRemakeTypeToExistingOpening() {
+        Story story = createStory(List.of(Genre.FANTASY));
+
+        GeneratedChapterResult standard = generationService.generateOpening(story);
+        GeneratedStoryResult remake = generationService.generateClassicRemakeOpening(
+                story,
+                "흥부와 놀부",
+                "villain"
+        );
+
+        assertEquals("흥부와 놀부: 놀부의 마지막 선택", remake.title());
+        assertTrue(remake.content().startsWith(
+                "놀부는 오늘도 자신이 옳다고 믿었다."
+        ));
+        assertTrue(remake.content().contains(standard.content()));
+        assertEquals(standard.choices(), remake.choices());
+    }
+
+    @Test
+    void classicRemakeSubtitleChangesByClassicAndRemakeType() {
+        Story story = createStory(List.of(Genre.FANTASY));
+
+        GeneratedStoryResult modernHeungbu =
+                generationService.generateClassicRemakeOpening(
+                        story,
+                        "흥부와 놀부",
+                        "era"
+                );
+        GeneratedStoryResult changedSimcheongEnding =
+                generationService.generateClassicRemakeOpening(
+                        story,
+                        "심청전",
+                        "ending"
+                );
+
+        assertEquals("흥부와 놀부: 2026년 서울의 형제", modernHeungbu.title());
+        assertTrue(modernHeungbu.content().startsWith(
+                "서울 2026년.\n\n흥부는 작은 원룸에서 하루를 시작했다."
+        ));
+        assertEquals(
+                "심청전: 바다에 뛰어들지 않은 심청",
+                changedSimcheongEnding.title()
+        );
+    }
+
     private static Story createStory(List<Genre> genres) {
         return Story.create(
                 User.createLocal(

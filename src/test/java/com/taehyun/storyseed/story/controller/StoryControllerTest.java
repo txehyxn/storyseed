@@ -122,6 +122,67 @@ class StoryControllerTest {
     }
 
     @Test
+    void createClassicRemakeStoryRedirectsToCreatedStory() throws Exception {
+        Story story = mock(Story.class);
+        when(story.getId()).thenReturn(20L);
+        when(storyService.createClassicRemakeStory(
+                any(User.class),
+                any(CreateStoryRequest.class),
+                eq("흥부와 놀부"),
+                eq("villain")
+        )).thenReturn(story);
+
+        mockMvc.perform(post("/stories")
+                        .cookie(accessTokenCookie)
+                        .with(csrf())
+                        .param("genres", "FANTASY")
+                        .param("classicId", "heungbu-nolbu")
+                        .param("remakeType", "villain"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/stories/20"));
+
+        verify(storyService).createClassicRemakeStory(
+                any(User.class),
+                any(CreateStoryRequest.class),
+                eq("흥부와 놀부"),
+                eq("villain")
+        );
+        verify(storyService, never()).createStory(any(), any());
+    }
+
+    @Test
+    void createClassicRemakeStoryRejectsUnknownClassic() throws Exception {
+        mockMvc.perform(post("/stories")
+                        .cookie(accessTokenCookie)
+                        .with(csrf())
+                        .param("genres", "FANTASY")
+                        .param("classicId", "not-found")
+                        .param("remakeType", "hero"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/story/classics"));
+
+        verify(storyService, never()).createClassicRemakeStory(
+                any(), any(), any(), any()
+        );
+    }
+
+    @Test
+    void createClassicRemakeStoryRejectsUnknownRemakeType() throws Exception {
+        mockMvc.perform(post("/stories")
+                        .cookie(accessTokenCookie)
+                        .with(csrf())
+                        .param("genres", "FANTASY")
+                        .param("classicId", "heungbu-nolbu")
+                        .param("remakeType", "not-found"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/story/classics/heungbu-nolbu"));
+
+        verify(storyService, never()).createClassicRemakeStory(
+                any(), any(), any(), any()
+        );
+    }
+
+    @Test
     void createStoryRejectsRequestWithoutCsrfToken() throws Exception {
         mockMvc.perform(post("/stories")
                         .cookie(accessTokenCookie)

@@ -107,12 +107,14 @@ class StoryStartControllerTest {
                 .andExpect(content().string(containsString("결말 바꾸기")))
                 .andExpect(content().string(containsString("악역 시점")))
                 .andExpect(content().string(containsString("AI에게 맡기기")))
-                .andExpect(content().string(containsString("classic=heungbu-nolbu")))
-                .andExpect(content().string(containsString("type=hero")))
-                .andExpect(content().string(containsString("type=era")))
-                .andExpect(content().string(containsString("type=ending")))
-                .andExpect(content().string(containsString("type=villain")))
-                .andExpect(content().string(containsString("type=ai")));
+                .andExpect(content().string(containsString("action=\"/stories\"")))
+                .andExpect(content().string(containsString("name=\"classicId\" value=\"heungbu-nolbu\"")))
+                .andExpect(content().string(containsString("name=\"remakeType\" value=\"hero\"")))
+                .andExpect(content().string(containsString("name=\"remakeType\" value=\"era\"")))
+                .andExpect(content().string(containsString("name=\"remakeType\" value=\"ending\"")))
+                .andExpect(content().string(containsString("name=\"remakeType\" value=\"villain\"")))
+                .andExpect(content().string(containsString("name=\"remakeType\" value=\"ai\"")))
+                .andExpect(content().string(containsString("name=\"_csrf\"")));
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.taehyun.storyseed.story.domain.Genre;
 import com.taehyun.storyseed.story.domain.Story;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.generation.GeneratedChapterResult;
+import com.taehyun.storyseed.story.generation.GeneratedStoryResult;
 import com.taehyun.storyseed.story.generation.StoryGenerationService;
 import com.taehyun.storyseed.story.repository.ChapterRepository;
 import com.taehyun.storyseed.story.repository.ChoiceRepository;
@@ -111,6 +112,46 @@ class StoryServiceTest {
         );
 
         verify(storyRepository, never()).save(any(Story.class));
+    }
+
+    @Test
+    void createClassicRemakeStoryUsesExistingChapterAndChoicePipeline() {
+        User user = createUser();
+        CreateStoryRequest request = new CreateStoryRequest(List.of(Genre.FANTASY));
+        when(storyRepository.save(any(Story.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(storyGenerationService.generateClassicRemakeOpening(
+                any(Story.class),
+                org.mockito.ArgumentMatchers.eq("흥부와 놀부"),
+                org.mockito.ArgumentMatchers.eq("villain")
+        )).thenReturn(new GeneratedStoryResult(
+                "흥부와 놀부: 놀부의 마지막 선택",
+                "흥부와 놀부의 악역은 오늘도 자신이 옳다고 믿었다.",
+                List.of("흥부를 찾아간다.", "제비의 행방을 조사한다.")
+        ));
+        when(chapterRepository.save(any(Chapter.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Story result = storyService.createClassicRemakeStory(
+                user,
+                request,
+                "흥부와 놀부",
+                "villain"
+        );
+
+        assertNull(result.getTitle());
+        assertEquals(List.of(Genre.FANTASY), result.getGenres());
+        verify(storyRepository).updateTitle(
+                result.getId(),
+                "흥부와 놀부: 놀부의 마지막 선택"
+        );
+        verify(storyGenerationService).generateClassicRemakeOpening(
+                result,
+                "흥부와 놀부",
+                "villain"
+        );
+        verify(chapterRepository).save(any(Chapter.class));
+        verify(choiceRepository, org.mockito.Mockito.times(2)).save(any(Choice.class));
     }
 
     @Test

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/stories")
@@ -38,14 +39,49 @@ public class StoryController {
             @AuthenticationPrincipal User user,
             @Valid @ModelAttribute("request") CreateStoryRequest request,
             BindingResult bindingResult,
+            @RequestParam(required = false) String classicId,
+            @RequestParam(required = false) String remakeType,
             Model model
     ) {
         if (bindingResult.hasErrors()) {
+            if (classicId != null) {
+                return "redirect:/story/classics/" + classicId;
+            }
             model.addAttribute("genres", Genre.values());
             return "story/new";
         }
 
-        Story story = storyService.createStory(user, request);
+        boolean hasClassicId = classicId != null && !classicId.isBlank();
+        boolean hasRemakeType = remakeType != null && !remakeType.isBlank();
+
+        if (hasClassicId != hasRemakeType) {
+            return "redirect:/story/classics";
+        }
+
+        Story story;
+        if (hasClassicId) {
+            StoryStartController.ClassicStory classic =
+                    StoryStartController.findClassicStory(classicId);
+            if (classic == null) {
+                return "redirect:/story/classics";
+            }
+
+            StoryStartController.RemakeOption remakeOption =
+                    StoryStartController.findRemakeOption(remakeType);
+            if (remakeOption == null) {
+                return "redirect:/story/classics/" + classicId;
+            }
+
+            story = storyService.createClassicRemakeStory(
+                    user,
+                    request,
+                    classic.title(),
+                    remakeOption.type()
+            );
+        } else {
+            story = storyService.createStory(user, request);
+        }
+
         return "redirect:/stories/" + story.getId();
     }
 

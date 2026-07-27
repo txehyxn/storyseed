@@ -20,6 +20,68 @@ public class MockStoryGenerationService implements StoryGenerationService {
         );
     }
 
+    @Override
+    public GeneratedStoryResult generateClassicRemakeOpening(
+            Story story,
+            String classicTitle,
+            String remakeType
+    ) {
+        GeneratedChapterResult opening = generateOpening(story);
+        String subtitle = createSubtitle(classicTitle, remakeType);
+        String introduction = createRemakeIntroduction(classicTitle, remakeType);
+
+        return new GeneratedStoryResult(
+                classicTitle + ": " + subtitle,
+                introduction + "\n\n" + opening.content(),
+                opening.choices()
+        );
+    }
+
+    private String createSubtitle(String classicTitle, String remakeType) {
+        if ("흥부와 놀부".equals(classicTitle) && "villain".equals(remakeType)) {
+            return "놀부의 마지막 선택";
+        }
+        if ("흥부와 놀부".equals(classicTitle) && "era".equals(remakeType)) {
+            return "2026년 서울의 형제";
+        }
+        if ("심청전".equals(classicTitle) && "ending".equals(remakeType)) {
+            return "바다에 뛰어들지 않은 심청";
+        }
+        if ("홍길동전".equals(classicTitle) && "hero".equals(remakeType)) {
+            return "왕의 검";
+        }
+        if ("신데렐라".equals(classicTitle) && "hero".equals(remakeType)) {
+            return "유리구두를 버린 소녀";
+        }
+
+        return switch (remakeType) {
+            case "hero" -> "새로운 주인공";
+            case "era" -> "2026년에 다시 만난 이야기";
+            case "ending" -> "운명을 거스른 마지막 선택";
+            case "villain" -> "악역이 감춘 진실";
+            case "ai" -> "예측할 수 없는 새로운 길";
+            default -> throw new IllegalArgumentException("unsupported remake type");
+        };
+    }
+
+    private String createRemakeIntroduction(String classicTitle, String remakeType) {
+        if ("흥부와 놀부".equals(classicTitle) && "villain".equals(remakeType)) {
+            return "놀부는 오늘도 자신이 옳다고 믿었다.";
+        }
+        if ("흥부와 놀부".equals(classicTitle) && "era".equals(remakeType)) {
+            return "서울 2026년.\n\n흥부는 작은 원룸에서 하루를 시작했다.";
+        }
+
+        return switch (remakeType) {
+            case "hero" -> classicTitle + "의 새로운 주인공이 이야기의 첫걸음을 내디뎠다.";
+            case "era" -> "서울 2026년, " + classicTitle + "의 이야기가 다시 시작되었다.";
+            case "ending" -> classicTitle + "의 알려진 결말과는 다른 운명이 움직이기 시작했다.";
+            case "villain" -> classicTitle + "의 악역은 오늘도 자신이 옳다고 믿었다.";
+            case "ai" -> classicTitle + "은 누구도 예상하지 못한 방향으로 다시 시작되었다.";
+            default -> throw new IllegalArgumentException("unsupported remake type");
+        };
+    }
+
     private String createOpening(OpeningScene scene, List<Genre> secondaryGenres) {
         String secondaryAtmosphere = secondaryGenres.stream()
                 .map(this::createSecondaryAtmosphere)

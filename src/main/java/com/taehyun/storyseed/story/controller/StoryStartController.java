@@ -50,10 +50,7 @@ public class StoryStartController {
             @PathVariable String classicId,
             Model model
     ) {
-        ClassicStory classicStory = CLASSIC_STORIES.stream()
-                .filter(classic -> classic.id().equals(classicId))
-                .findFirst()
-                .orElse(null);
+        ClassicStory classicStory = findClassicStory(classicId);
 
         if (classicStory == null) {
             return "redirect:/story/classics";
@@ -62,6 +59,20 @@ public class StoryStartController {
         model.addAttribute("classicStory", classicStory);
         model.addAttribute("remakeOptions", REMAKE_OPTIONS);
         return "story/classic-options";
+    }
+
+    static ClassicStory findClassicStory(String classicId) {
+        return CLASSIC_STORIES.stream()
+                .filter(classic -> classic.id().equals(classicId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    static RemakeOption findRemakeOption(String remakeType) {
+        return REMAKE_OPTIONS.stream()
+                .filter(option -> option.type().equals(remakeType))
+                .findFirst()
+                .orElse(null);
     }
 
     @GetMapping("/coming-soon")

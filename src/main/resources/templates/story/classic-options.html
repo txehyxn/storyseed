@@ -23,9 +23,12 @@
         <article class="remake-option-card" th:each="option : ${remakeOptions}">
             <h3 th:text="${option.title}">주인공 바꾸기</h3>
             <p th:text="${option.description}">다른 인물을 주인공으로 이야기를 새롭게 바라봅니다.</p>
-            <a class="option-link primary-link"
-               th:href="@{/story/coming-soon(mode='classic-remake',classic=${classicStory.id},type=${option.type})}"
-               href="/story/coming-soon?mode=classic-remake&amp;classic=heungbu-nolbu&amp;type=hero">이 방식 선택</a>
+            <form th:action="@{/stories}" method="post">
+                <input type="hidden" name="genres" value="FANTASY">
+                <input type="hidden" name="classicId" th:value="${classicStory.id}" value="heungbu-nolbu">
+                <input type="hidden" name="remakeType" th:value="${option.type}" value="hero">
+                <button type="submit">이 방식 선택</button>
+            </form>
         </article>
     </section>
 

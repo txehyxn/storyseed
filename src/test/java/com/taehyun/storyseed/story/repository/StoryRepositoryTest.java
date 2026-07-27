@@ -51,4 +51,22 @@ class StoryRepositoryTest {
         );
         assertEquals(Genre.FANTASY, reloaded.getPrimaryGenre());
     }
+
+    @Test
+    void titleCanBeUpdatedWithoutChangingStoryEntityStructure() {
+        User user = userRepository.save(
+                User.createLocal("title@test.com", "encoded-password", "title-user")
+        );
+        Story story = storyRepository.save(
+                Story.create(user, List.of(Genre.FANTASY))
+        );
+
+        storyRepository.updateTitle(
+                story.getId(),
+                "흥부와 놀부: 놀부의 마지막 선택"
+        );
+
+        Story reloaded = storyRepository.findById(story.getId()).orElseThrow();
+        assertEquals("흥부와 놀부: 놀부의 마지막 선택", reloaded.getTitle());
+    }
 }

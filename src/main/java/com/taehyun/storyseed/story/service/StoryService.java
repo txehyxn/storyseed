@@ -6,6 +6,7 @@ import com.taehyun.storyseed.story.domain.Choice;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.dto.StoryDetailView;
 import com.taehyun.storyseed.story.generation.GeneratedChapterResult;
+import com.taehyun.storyseed.story.generation.GeneratedStoryResult;
 import com.taehyun.storyseed.story.generation.StoryGenerationService;
 import com.taehyun.storyseed.story.repository.ChapterRepository;
 import com.taehyun.storyseed.story.repository.ChoiceRepository;
@@ -37,19 +38,49 @@ public class StoryService {
 
     @Transactional
     public Story createStory(User user, CreateStoryRequest request) {
+        validateUser(user);
+        Story story = storyRepository.save(Story.create(user, request.genres()));
+        GeneratedChapterResult opening = storyGenerationService.generateOpening(story);
+        saveOpening(story, opening.content(), opening.choices());
+        return story;
+    }
+
+    @Transactional
+    public Story createClassicRemakeStory(
+            User user,
+            CreateStoryRequest request,
+            String classicTitle,
+            String remakeType
+    ) {
+        validateUser(user);
+        Story story = storyRepository.save(Story.create(user, request.genres()));
+        GeneratedStoryResult generatedStory =
+                storyGenerationService.generateClassicRemakeOpening(
+                        story,
+                        classicTitle,
+                        remakeType
+                );
+        storyRepository.updateTitle(story.getId(), generatedStory.title());
+        saveOpening(story, generatedStory.content(), generatedStory.choices());
+        return story;
+    }
+
+    private void saveOpening(
+            Story story,
+            String content,
+            java.util.List<String> choices
+    ) {
+        Chapter chapter = chapterRepository.save(Chapter.create(story, 1, content));
+
+        for (int index = 0; index < choices.size(); index++) {
+            choiceRepository.save(Choice.create(chapter, index + 1, choices.get(index)));
+        }
+    }
+
+    private void validateUser(User user) {
         if (user == null) {
             throw new IllegalArgumentException("user must not be null");
         }
-
-        Story story = storyRepository.save(Story.create(user, request.genres()));
-        GeneratedChapterResult opening = storyGenerationService.generateOpening(story);
-        Chapter chapter = chapterRepository.save(Chapter.create(story, 1, opening.content()));
-
-        for (int index = 0; index < opening.choices().size(); index++) {
-            choiceRepository.save(Choice.create(chapter, index + 1, opening.choices().get(index)));
-        }
-
-        return story;
     }
 
     public Story getStory(User user, Long storyId) {
