@@ -150,4 +150,29 @@ class StoryGeneratorTest {
         assertTrue(growing.content().contains("첫 판단부터 실수"));
         assertTrue(!genius.content().equals(growing.content()));
     }
+
+    @Test
+    void storySeedGeneratorUsesSeedAndChangesResultByGenre() {
+        StorySeedGenerator generator = new StorySeedGenerator();
+        StoryGenerationRequest mysteryRequest = StoryGenerationRequest.storySeed(
+                List.of(Genre.MYSTERY),
+                "비가 멈추지 않는 도시"
+        );
+        StoryGenerationRequest fantasyRequest = StoryGenerationRequest.storySeed(
+                List.of(Genre.FANTASY),
+                "비가 멈추지 않는 도시"
+        );
+
+        GeneratedStoryResult mystery = generator.generate(mysteryRequest);
+        GeneratedStoryResult fantasy = generator.generate(fantasyRequest);
+
+        assertEquals(StoryGenerationMode.STORY_SEED, generator.mode());
+        assertEquals("비가 멈추지 않는 도시: 마지막 우산", mystery.title());
+        assertTrue(mystery.content().contains("비가 멈추지 않는 도시"));
+        assertTrue(mystery.content().contains("수상한 흔적"));
+        assertEquals(2, mystery.choices().size());
+        assertTrue(mystery.choices().stream().noneMatch(String::isBlank));
+        assertTrue(!mystery.content().equals(fantasy.content()));
+        assertTrue(!mystery.choices().equals(fantasy.choices()));
+    }
 }

@@ -2,6 +2,8 @@ package com.taehyun.storyseed.story.controller;
 
 import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
 import com.taehyun.storyseed.story.dto.CreateAiRecommendationRequest;
+import com.taehyun.storyseed.story.dto.CreateStorySeedRequest;
+import com.taehyun.storyseed.story.domain.Genre;
 import com.taehyun.storyseed.story.generation.ProtagonistType;
 import com.taehyun.storyseed.story.generation.RecommendationMood;
 import com.taehyun.storyseed.story.generation.StoryPacing;
@@ -81,6 +83,17 @@ public class StoryStartController {
         model.addAttribute("recommendationMoods", RecommendationMood.values());
         model.addAttribute("storyPacings", StoryPacing.values());
         model.addAttribute("protagonistTypes", ProtagonistType.values());
+    }
+
+    @GetMapping("/seed")
+    public String showStorySeedForm(Model model) {
+        model.addAttribute("request", new CreateStorySeedRequest("", null));
+        addStorySeedOptions(model);
+        return "story/seed";
+    }
+
+    static void addStorySeedOptions(Model model) {
+        model.addAttribute("genres", Genre.values());
     }
 
     @GetMapping("/classics/{classicId}")

@@ -6,6 +6,7 @@ import com.taehyun.storyseed.story.domain.Choice;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
 import com.taehyun.storyseed.story.dto.CreateAiRecommendationRequest;
+import com.taehyun.storyseed.story.dto.CreateStorySeedRequest;
 import com.taehyun.storyseed.story.dto.StoryDetailView;
 import com.taehyun.storyseed.story.generation.GeneratedStoryResult;
 import com.taehyun.storyseed.story.generation.StoryGenerationRequest;
@@ -110,6 +111,23 @@ public class StoryService {
                         request.pacing(),
                         request.protagonistType()
                 )
+        );
+        storyRepository.updateTitle(story.getId(), generatedStory.title());
+        saveOpening(story, generatedStory.content(), generatedStory.choices());
+        return story;
+    }
+
+    @Transactional
+    public Story createStorySeedStory(
+            User user,
+            CreateStorySeedRequest request
+    ) {
+        validateUser(user);
+        java.util.List<com.taehyun.storyseed.story.domain.Genre> genres =
+                java.util.List.of(request.genre());
+        Story story = storyRepository.save(Story.create(user, genres));
+        GeneratedStoryResult generatedStory = storyGenerationService.generate(
+                StoryGenerationRequest.storySeed(genres, request.seedText())
         );
         storyRepository.updateTitle(story.getId(), generatedStory.title());
         saveOpening(story, generatedStory.content(), generatedStory.choices());

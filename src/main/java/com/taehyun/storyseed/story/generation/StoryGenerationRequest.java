@@ -15,7 +15,8 @@ public record StoryGenerationRequest(
         String protagonistName,
         RecommendationMood recommendationMood,
         StoryPacing storyPacing,
-        ProtagonistType protagonistType
+        ProtagonistType protagonistType,
+        String seedText
 ) {
 
     public StoryGenerationRequest {
@@ -26,6 +27,7 @@ public record StoryGenerationRequest(
         return new StoryGenerationRequest(
                 StoryGenerationMode.GENRE,
                 genres,
+                null,
                 null,
                 null,
                 null,
@@ -54,6 +56,7 @@ public record StoryGenerationRequest(
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }
@@ -74,6 +77,7 @@ public record StoryGenerationRequest(
                 worldTheme,
                 worldEra,
                 protagonistName,
+                null,
                 null,
                 null,
                 null
@@ -97,7 +101,35 @@ public record StoryGenerationRequest(
                 null,
                 recommendationMood,
                 storyPacing,
-                protagonistType
+                protagonistType,
+                null
         );
+    }
+
+    public static StoryGenerationRequest storySeed(
+            List<Genre> genres,
+            String seedText
+    ) {
+        return new StoryGenerationRequest(
+                StoryGenerationMode.STORY_SEED,
+                genres,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                normalizeSeedText(seedText)
+        );
+    }
+
+    private static String normalizeSeedText(String seedText) {
+        if (seedText == null) {
+            return null;
+        }
+        return seedText.trim().replaceAll("\\s+", " ");
     }
 }

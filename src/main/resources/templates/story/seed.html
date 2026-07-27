@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>이야기 씨앗 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card story-card">
+    <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
+    <h1>이야기 씨앗</h1>
+    <p>짧은 문장이나 키워드에서 새로운 이야기의 첫 장면을 시작해 보세요.</p>
+
+    <form class="world-form" th:action="@{/stories}" th:object="${request}" method="post">
+        <input type="hidden" name="generationMode" value="STORY_SEED">
+
+        <label for="seedText">이야기 씨앗</label>
+        <input id="seedText" type="text" th:field="*{seedText}" maxlength="100"
+               placeholder="예: 비가 멈추지 않는 도시">
+
+        <label for="genre">원하는 장르</label>
+        <select id="genre" th:field="*{genre}">
+            <option value="">장르를 선택하세요</option>
+            <option th:each="genreOption : ${genres}"
+                    th:value="${genreOption.name()}"
+                    th:text="${genreOption.displayName}">판타지</option>
+        </select>
+
+        <p class="message error"
+           th:if="${#fields.hasAnyErrors()}"
+           th:each="error : ${#fields.allErrors()}"
+           th:text="${error}"></p>
+
+        <button type="submit">이야기 시작하기</button>
+    </form>
+
+    <a class="back-link" th:href="@{/story/start}" href="/story/start">이야기 시작으로 돌아가기</a>
+</main>
+</body>
+</html>

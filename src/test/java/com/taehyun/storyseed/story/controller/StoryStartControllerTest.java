@@ -72,12 +72,13 @@ class StoryStartControllerTest {
                 .andExpect(content().string(containsString("명작 다시 쓰기")))
                 .andExpect(content().string(containsString("나만의 세계 만들기")))
                 .andExpect(content().string(containsString("AI 추천 이야기")))
-                .andExpect(content().string(containsString("이야기 씨앗으로 만들기")))
+                .andExpect(content().string(containsString("이야기 씨앗")))
                 .andExpect(content().string(containsString("이어서 쓰기")))
                 .andExpect(content().string(containsString("href=\"/stories/new\"")))
                 .andExpect(content().string(containsString("href=\"/story/classics\"")))
                 .andExpect(content().string(containsString("href=\"/story/world\"")))
                 .andExpect(content().string(containsString("href=\"/story/recommendation\"")))
+                .andExpect(content().string(containsString("href=\"/story/seed\"")))
                 .andExpect(content().string(containsString("사용 가능")))
                 .andExpect(content().string(containsString("준비 중")));
     }
@@ -120,6 +121,22 @@ class StoryStartControllerTest {
                 .andExpect(content().string(containsString("비밀을 가진 인물")))
                 .andExpect(content().string(containsString("정의로운 영웅")))
                 .andExpect(content().string(containsString("name=\"_csrf\"")));
+    }
+
+    @Test
+    void storySeedPageShowsSeedGenreFormAndCsrfToken() throws Exception {
+        mockMvc.perform(get("/story/seed").cookie(accessTokenCookie))
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/seed"))
+                .andExpect(model().attributeExists("request", "genres"))
+                .andExpect(content().string(containsString("name=\"seedText\"")))
+                .andExpect(content().string(containsString("name=\"genre\"")))
+                .andExpect(content().string(containsString("action=\"/stories\"")))
+                .andExpect(content().string(containsString(
+                        "name=\"generationMode\" value=\"STORY_SEED\""
+                )))
+                .andExpect(content().string(containsString("name=\"_csrf\"")))
+                .andExpect(content().string(containsString("이야기 시작하기")));
     }
 
     @Test

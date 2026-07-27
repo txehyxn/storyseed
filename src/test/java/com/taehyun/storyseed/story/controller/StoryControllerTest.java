@@ -7,6 +7,7 @@ import com.taehyun.storyseed.story.domain.Story;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
 import com.taehyun.storyseed.story.dto.CreateAiRecommendationRequest;
+import com.taehyun.storyseed.story.dto.CreateStorySeedRequest;
 import com.taehyun.storyseed.story.dto.StoryDetailView;
 import com.taehyun.storyseed.story.service.StoryService;
 import com.taehyun.storyseed.user.domain.User;
@@ -297,6 +298,79 @@ class StoryControllerTest {
     }
 
     @Test
+    void createStorySeedRedirectsToCreatedStory() throws Exception {
+        Story story = mock(Story.class);
+        when(story.getId()).thenReturn(50L);
+        when(storyService.createStorySeedStory(
+                any(User.class),
+                any(CreateStorySeedRequest.class)
+        )).thenReturn(story);
+
+        mockMvc.perform(validStorySeedRequest())
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/stories/50"));
+
+        verify(storyService).createStorySeedStory(
+                any(User.class),
+                any(CreateStorySeedRequest.class)
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", " ", "가"})
+    void createStorySeedRejectsInvalidSeed(String seedText) throws Exception {
+        mockMvc.perform(storySeedRequest(seedText, "MYSTERY"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/seed"))
+                .andExpect(model().attributeHasFieldErrors("request", "seedText"));
+
+        verify(storyService, never()).createStorySeedStory(any(), any());
+    }
+
+    @Test
+    void createStorySeedRejectsSeedLongerThanOneHundredCharacters() throws Exception {
+        mockMvc.perform(storySeedRequest("가".repeat(101), "MYSTERY"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/seed"))
+                .andExpect(model().attributeHasFieldErrors("request", "seedText"));
+
+        verify(storyService, never()).createStorySeedStory(any(), any());
+    }
+
+    @Test
+    void createStorySeedRejectsMissingOrUnknownGenre() throws Exception {
+        mockMvc.perform(post("/stories")
+                        .cookie(accessTokenCookie)
+                        .with(csrf())
+                        .param("generationMode", "STORY_SEED")
+                        .param("seedText", "기억을 파는 상점"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeHasFieldErrors("request", "genre"));
+
+        mockMvc.perform(storySeedRequest("기억을 파는 상점", "UNKNOWN"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/seed"))
+                .andExpect(model().attributeHasFieldErrors("request", "genre"));
+
+        verify(storyService, never()).createStorySeedStory(any(), any());
+    }
+
+    @Test
+    void unknownGenerationModeDoesNotUseAnyStoryCreationFlow() throws Exception {
+        mockMvc.perform(post("/stories")
+                        .cookie(accessTokenCookie)
+                        .with(csrf())
+                        .param("generationMode", "UNKNOWN")
+                        .param("seedText", "비가 멈추지 않는 도시")
+                        .param("genre", "MYSTERY"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/story/seed"));
+
+        verify(storyService, never()).createStory(any(), any());
+        verify(storyService, never()).createStorySeedStory(any(), any());
+    }
+
+    @Test
     void createStoryRejectsRequestWithoutCsrfToken() throws Exception {
         mockMvc.perform(post("/stories")
                         .cookie(accessTokenCookie)
@@ -399,5 +473,21 @@ class StoryControllerTest {
                 .param("mood", "MYSTERIOUS")
                 .param("pacing", "BALANCED")
                 .param("protagonistType", "SECRETIVE");
+    }
+
+    private MockHttpServletRequestBuilder validStorySeedRequest() {
+        return storySeedRequest("비가 멈추지 않는 도시", "MYSTERY");
+    }
+
+    private MockHttpServletRequestBuilder storySeedRequest(
+            String seedText,
+            String genre
+    ) {
+        return post("/stories")
+                .cookie(accessTokenCookie)
+                .with(csrf())
+                .param("generationMode", "STORY_SEED")
+                .param("seedText", seedText)
+                .param("genre", genre);
     }
 }

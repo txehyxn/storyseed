@@ -109,4 +109,30 @@ class StoryGenerationServiceTest {
                 () -> new StoryGenerationService(List.of(first, second))
         );
     }
+
+    @Test
+    void storySeedModeSelectsOnlyStorySeedGenerator() {
+        StoryGenerator genreGenerator = mock(StoryGenerator.class);
+        StoryGenerator seedGenerator = mock(StoryGenerator.class);
+        when(genreGenerator.mode()).thenReturn(StoryGenerationMode.GENRE);
+        when(seedGenerator.mode()).thenReturn(StoryGenerationMode.STORY_SEED);
+        StoryGenerationService service =
+                new StoryGenerationService(List.of(genreGenerator, seedGenerator));
+        StoryGenerationRequest request = StoryGenerationRequest.storySeed(
+                List.of(Genre.MYSTERY),
+                "비가 멈추지 않는 도시"
+        );
+        GeneratedStoryResult expected = new GeneratedStoryResult(
+                "비가 멈추지 않는 도시: 마지막 우산",
+                "비가 멈추지 않는 도시에서 단서가 발견됐다.",
+                List.of("편지를 읽는다.", "자정을 기다린다.")
+        );
+        when(seedGenerator.generate(request)).thenReturn(expected);
+
+        GeneratedStoryResult result = service.generate(request);
+
+        assertSame(expected, result);
+        verify(seedGenerator).generate(request);
+        verify(genreGenerator, never()).generate(request);
+    }
 }

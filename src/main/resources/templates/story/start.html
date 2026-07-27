@@ -46,12 +46,12 @@
                href="/story/recommendation">취향 선택하기</a>
         </article>
 
-        <article class="start-option-card">
-            <span class="status-badge">준비 중</span>
-            <h2>이야기 씨앗으로 만들기</h2>
-            <p>짧은 아이디어 한 줄을 풍성한 이야기로 키웁니다.</p>
-            <a class="option-link secondary-link" th:href="@{/story/coming-soon(mode='seed')}"
-               href="/story/coming-soon?mode=seed">자세히 보기</a>
+        <article class="start-option-card available">
+            <span class="status-badge available-status">사용 가능</span>
+            <h2>이야기 씨앗</h2>
+            <p>짧은 아이디어 한 줄에서 새로운 이야기의 첫 장면을 시작합니다.</p>
+            <a class="option-link primary-link" th:href="@{/story/seed}"
+               href="/story/seed">씨앗 입력하기</a>
         </article>
 
         <article class="start-option-card">

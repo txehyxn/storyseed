@@ -5,6 +5,7 @@ import com.taehyun.storyseed.story.domain.Genre;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
 import com.taehyun.storyseed.story.dto.CreateAiRecommendationRequest;
+import com.taehyun.storyseed.story.dto.CreateStorySeedRequest;
 import com.taehyun.storyseed.story.service.StoryService;
 import com.taehyun.storyseed.user.domain.User;
 import jakarta.validation.Valid;
@@ -36,10 +37,7 @@ public class StoryController {
         return "story/new";
     }
 
-    @PostMapping(params = {
-            "generationMode!=CUSTOM_WORLD",
-            "generationMode!=AI_RECOMMENDATION"
-    })
+    @PostMapping(params = "!generationMode")
     public String createStory(
             @AuthenticationPrincipal User user,
             @Valid @ModelAttribute("request") CreateStoryRequest request,
@@ -120,6 +118,32 @@ public class StoryController {
 
         Story story = storyService.createAiRecommendationStory(user, request);
         return "redirect:/stories/" + story.getId();
+    }
+
+    @PostMapping(params = "generationMode=STORY_SEED")
+    public String createStorySeedStory(
+            @AuthenticationPrincipal User user,
+            @Valid @ModelAttribute("request") CreateStorySeedRequest request,
+            BindingResult bindingResult,
+            Model model
+    ) {
+        if (bindingResult.hasErrors()) {
+            StoryStartController.addStorySeedOptions(model);
+            return "story/seed";
+        }
+
+        Story story = storyService.createStorySeedStory(user, request);
+        return "redirect:/stories/" + story.getId();
+    }
+
+    @PostMapping(params = {
+            "generationMode",
+            "generationMode!=CUSTOM_WORLD",
+            "generationMode!=AI_RECOMMENDATION",
+            "generationMode!=STORY_SEED"
+    })
+    public String rejectUnknownGenerationMode() {
+        return "redirect:/story/seed";
     }
 
     @GetMapping("/{storyId}")

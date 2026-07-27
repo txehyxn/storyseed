@@ -7,6 +7,7 @@ import com.taehyun.storyseed.story.domain.Story;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
 import com.taehyun.storyseed.story.dto.CreateAiRecommendationRequest;
+import com.taehyun.storyseed.story.dto.CreateStorySeedRequest;
 import com.taehyun.storyseed.story.generation.GeneratedStoryResult;
 import com.taehyun.storyseed.story.generation.StoryGenerationMode;
 import com.taehyun.storyseed.story.generation.StoryGenerationRequest;
@@ -239,6 +240,38 @@ class StoryServiceTest {
         assertEquals(StoryPacing.BALANCED, generationRequest.storyPacing());
         assertEquals(ProtagonistType.SECRETIVE, generationRequest.protagonistType());
         verify(storyRepository).updateTitle(result.getId(), "달이 사라진 밤의 아이");
+        verify(chapterRepository).save(any(Chapter.class));
+        verify(choiceRepository, org.mockito.Mockito.times(2)).save(any(Choice.class));
+    }
+
+    @Test
+    void createStorySeedUsesGeneratorAndExistingPipeline() {
+        User user = createUser();
+        CreateStorySeedRequest request =
+                new CreateStorySeedRequest("  비가   멈추지 않는 도시  ", Genre.MYSTERY);
+        when(storyRepository.save(any(Story.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(storyGenerationService.generate(any(StoryGenerationRequest.class)))
+                .thenReturn(new GeneratedStoryResult(
+                        "비가 멈추지 않는 도시: 마지막 우산",
+                        "비가 멈추지 않는 도시에서 편지가 발견됐다.",
+                        List.of("주소로 향한다.", "자정을 기다린다.")
+                ));
+        when(chapterRepository.save(any(Chapter.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Story result = storyService.createStorySeedStory(user, request);
+
+        assertEquals(List.of(Genre.MYSTERY), result.getGenres());
+        ArgumentCaptor<StoryGenerationRequest> captor =
+                ArgumentCaptor.forClass(StoryGenerationRequest.class);
+        verify(storyGenerationService).generate(captor.capture());
+        assertEquals(StoryGenerationMode.STORY_SEED, captor.getValue().mode());
+        assertEquals("비가 멈추지 않는 도시", captor.getValue().seedText());
+        verify(storyRepository).updateTitle(
+                result.getId(),
+                "비가 멈추지 않는 도시: 마지막 우산"
+        );
         verify(chapterRepository).save(any(Chapter.class));
         verify(choiceRepository, org.mockito.Mockito.times(2)).save(any(Choice.class));
     }
