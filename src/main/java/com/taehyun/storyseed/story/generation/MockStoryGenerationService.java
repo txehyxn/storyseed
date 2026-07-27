@@ -26,18 +26,24 @@ public class MockStoryGenerationService implements StoryGenerationService {
             String classicTitle,
             String remakeType
     ) {
-        GeneratedChapterResult opening = generateOpening(story);
-        String subtitle = createSubtitle(classicTitle, remakeType);
-        String introduction = createRemakeIntroduction(classicTitle, remakeType);
+        ClassicTemplate template = createClassicTemplate(classicTitle);
+        String title = generateTitle(classicTitle, remakeType);
+        String opening = generateRemakeOpening(template, remakeType);
+        String body = generateBody(template, remakeType);
+        List<String> choices = generateChoices(template);
 
         return new GeneratedStoryResult(
-                classicTitle + ": " + subtitle,
-                introduction + "\n\n" + opening.content(),
-                opening.choices()
+                title,
+                opening + "\n\n" + body,
+                choices
         );
     }
 
-    private String createSubtitle(String classicTitle, String remakeType) {
+    private String generateTitle(String classicTitle, String remakeType) {
+        return classicTitle + ": " + generateSubtitle(classicTitle, remakeType);
+    }
+
+    private String generateSubtitle(String classicTitle, String remakeType) {
         if ("흥부와 놀부".equals(classicTitle) && "villain".equals(remakeType)) {
             return "놀부의 마지막 선택";
         }
@@ -64,22 +70,174 @@ public class MockStoryGenerationService implements StoryGenerationService {
         };
     }
 
-    private String createRemakeIntroduction(String classicTitle, String remakeType) {
-        if ("흥부와 놀부".equals(classicTitle) && "villain".equals(remakeType)) {
-            return "놀부는 오늘도 자신이 옳다고 믿었다.";
+    private String generateRemakeOpening(
+            ClassicTemplate template,
+            String remakeType
+    ) {
+        if ("흥부와 놀부".equals(template.title()) && "villain".equals(remakeType)) {
+            return """
+                    놀부는 언제나 세상이 자신에게 불공평하다고 생각했다.
+
+                    하지만 오늘은 그 생각이 흔들리기 시작했다.
+                    """.trim();
         }
-        if ("흥부와 놀부".equals(classicTitle) && "era".equals(remakeType)) {
-            return "서울 2026년.\n\n흥부는 작은 원룸에서 하루를 시작했다.";
+        if ("흥부와 놀부".equals(template.title()) && "era".equals(remakeType)) {
+            return """
+                    2026년 서울.
+
+                    흥부는 오래된 원룸 창문을 열었다.
+                    """.trim();
+        }
+        if ("흥부와 놀부".equals(template.title()) && "ending".equals(remakeType)) {
+            return """
+                    흥부는 다친 제비를 치료하지 않았다.
+
+                    그 선택은 모든 것을 바꾸기 시작했다.
+                    """.trim();
         }
 
         return switch (remakeType) {
-            case "hero" -> classicTitle + "의 새로운 주인공이 이야기의 첫걸음을 내디뎠다.";
-            case "era" -> "서울 2026년, " + classicTitle + "의 이야기가 다시 시작되었다.";
-            case "ending" -> classicTitle + "의 알려진 결말과는 다른 운명이 움직이기 시작했다.";
-            case "villain" -> classicTitle + "의 악역은 오늘도 자신이 옳다고 믿었다.";
-            case "ai" -> classicTitle + "은 누구도 예상하지 못한 방향으로 다시 시작되었다.";
+            case "hero" -> withTopic(template.protagonist())
+                    + " 원작에서 정해진 역할을 벗어나 스스로 운명을 고르기로 했다.";
+            case "era" -> "2026년 서울.\n\n"
+                    + withTopic(template.protagonist())
+                    + " 오래된 이야기와 꼭 닮은 사건을 마주했다.";
+            case "ending" -> withTopic(template.protagonist())
+                    + " 모두가 알고 있는 선택을 거부했다.\n\n"
+                    + "그 순간부터 원작과 다른 결말이 움직이기 시작했다.";
+            case "villain" -> withTopic(template.antagonist())
+                    + " 자신이 악인으로 기억되는 데에는 아무도 모르는 이유가 있다고 믿었다.";
+            case "ai" -> template.title()
+                    + "의 첫 장면은 익숙했지만, 이번에는 누구의 운명도 정해져 있지 않았다.";
             default -> throw new IllegalArgumentException("unsupported remake type");
         };
+    }
+
+    private String generateBody(ClassicTemplate template, String remakeType) {
+        String remakeDirection = switch (remakeType) {
+            case "hero" -> withTopic(template.protagonist())
+                    + " 다른 사람의 도움을 기다리지 않고 갈등의 한가운데로 걸어 들어갔다.";
+            case "era" -> "옛 약속과 갈등은 휴대전화와 높은 빌딩 사이에서도 사라지지 않았고, "
+                    + withTopic(template.protagonist()) + " 과거와 같은 선택 앞에 섰다.";
+            case "ending" -> "원작과 다른 결말을 향해 사건이 움직이자 주변 사람들의 운명도 어긋나기 시작했다.";
+            case "villain" -> withTopic(template.antagonist())
+                    + " 자신의 행동을 정당화하려 했지만, 감춰 둔 두려움이 조금씩 드러났다.";
+            case "ai" -> "익숙한 인물과 사건은 예상하지 못한 순서로 얽히며 새로운 갈등을 만들었다.";
+            default -> throw new IllegalArgumentException("unsupported remake type");
+        };
+
+        return template.background()
+                + "\n\n"
+                + remakeDirection
+                + "\n\n"
+                + template.incident();
+    }
+
+    private List<String> generateChoices(ClassicTemplate template) {
+        return List.of(template.firstChoice(), template.secondChoice());
+    }
+
+    private ClassicTemplate createClassicTemplate(String classicTitle) {
+        return switch (classicTitle) {
+            case "흥부와 놀부" -> new ClassicTemplate(
+                    classicTitle,
+                    "흥부",
+                    "놀부",
+                    "가난한 흥부와 부유한 놀부 사이에는 오래된 서운함이 쌓여 있었다. 가족과 재산을 둘러싼 갈등은 형제를 점점 더 멀어지게 했다.",
+                    "그날 저녁, 다친 제비 한 마리가 두 형제의 집 사이에 떨어졌다. 제비의 발에는 누구에게도 보여서는 안 될 작은 쪽지가 묶여 있었다.",
+                    "흥부를 찾아가 제비와 쪽지의 비밀을 함께 확인한다.",
+                    "제비를 숨긴 채 박씨가 가져올 변화를 혼자 기다린다."
+            );
+            case "콩쥐팥쥐" -> new ClassicTemplate(
+                    classicTitle,
+                    "콩쥐",
+                    "팥쥐",
+                    "콩쥐는 끝없는 집안일을 견디면서도 친절을 잃지 않았고, 팥쥐는 어머니의 기대 속에서 콩쥐를 경쟁자로 여겼다.",
+                    "잔칫날 아침, 깨진 독 아래에서 두 사람의 이름이 함께 적힌 오래된 편지가 발견됐다. 편지는 두 자매가 알고 있던 과거가 거짓일 수 있음을 암시했다.",
+                    "팥쥐에게 편지를 보여 주고 함께 진실을 확인한다.",
+                    "편지를 숨긴 채 잔칫집으로 가서 작성자를 먼저 찾는다."
+            );
+            case "홍길동전" -> new ClassicTemplate(
+                    classicTitle,
+                    "홍길동",
+                    "홍 판서",
+                    "길동은 뛰어난 재주를 지녔지만 아버지를 아버지라 부르지 못한 채 집과 세상의 벽을 견뎌야 했다.",
+                    "한밤중 왕의 인장이 찍힌 밀서가 길동에게 도착했다. 활빈당을 역적으로 몰겠다는 경고와 함께 궁으로 혼자 오라는 명령이 적혀 있었다.",
+                    "활빈당을 모아 백성을 지킬 새로운 계획을 세운다.",
+                    "왕을 직접 찾아가 밀서의 진짜 목적을 묻는다."
+            );
+            case "심청전" -> new ClassicTemplate(
+                    classicTitle,
+                    "심청",
+                    "뱃사람들의 우두머리",
+                    "심청은 아버지의 눈을 뜨게 하려는 마음으로 자신의 삶을 희생하려 했지만, 그 약속이 정말 효도인지 의문이 싹트기 시작했다.",
+                    "배가 떠나기 전날, 공양미 삼백 석이 이미 다른 사람의 이름으로 마련됐다는 장부가 심청에게 전해졌다.",
+                    "아버지에게 공양미와 희생의 진실을 모두 말한다.",
+                    "뱃사람들의 배에 몰래 올라 장부를 조작한 사람을 찾는다."
+            );
+            case "선녀와 나무꾼" -> new ClassicTemplate(
+                    classicTitle,
+                    "선녀",
+                    "나무꾼",
+                    "하늘로 돌아가고 싶은 선녀와 가족을 붙잡고 싶은 나무꾼 사이에는 사랑만으로 덮을 수 없는 약속이 남아 있었다.",
+                    "보름달이 뜬 밤, 잃어버린 날개옷이 스스로 빛을 내며 하늘과 땅을 잇는 문을 열었다. 문은 단 한 사람만 지나갈 수 있었다.",
+                    "날개옷을 선녀에게 돌려주고 선택을 맡긴다.",
+                    "하늘 문이 닫히기 전에 두 세계를 오갈 다른 길을 찾는다."
+            );
+            case "별주부전" -> new ClassicTemplate(
+                    classicTitle,
+                    "토끼",
+                    "용왕",
+                    "병든 용왕을 살리려는 자라와 살아서 육지로 돌아가려는 토끼의 지혜 싸움은 아직 끝나지 않았다.",
+                    "토끼가 용궁에 도착하자 약으로 필요한 것은 간이 아니라 거짓말을 하지 않는 자의 한마디라는 비밀 문서가 발견됐다.",
+                    "용왕 앞에서 문서를 공개하고 자라와 진실을 밝힌다.",
+                    "비밀을 이용해 용궁을 빠져나갈 거래를 제안한다."
+            );
+            case "토끼와 거북이" -> new ClassicTemplate(
+                    classicTitle,
+                    "거북이",
+                    "토끼",
+                    "빠른 토끼와 꾸준한 거북이의 경주는 모두가 아는 결과로 끝났지만, 두 친구는 승패 뒤에 남은 감정을 말하지 못했다.",
+                    "다음 날 숲에 더 위험한 두 번째 경주 안내장이 붙었다. 이번에는 먼저 도착한 한 명만 마을에 남을 수 있다는 조건이었다.",
+                    "토끼에게 함께 결승선에 도착하자고 제안한다.",
+                    "경주를 만든 자를 찾아 불공정한 조건을 없앤다."
+            );
+            case "빨간모자" -> new ClassicTemplate(
+                    classicTitle,
+                    "빨간모자",
+                    "늑대",
+                    "빨간모자는 할머니에게 음식을 전하러 숲을 건너야 했고, 늑대는 오래전부터 숲길의 모든 발소리를 지켜보고 있었다.",
+                    "갈림길에서 빨간모자는 할머니의 글씨로 적힌 경고를 발견했다. 하지만 쪽지에는 늑대를 피하라는 말 대신 늑대에게 길을 물으라고 쓰여 있었다.",
+                    "늑대를 찾아가 할머니가 남긴 경고의 뜻을 묻는다.",
+                    "평소와 다른 샛길로 먼저 할머니 집에 간다."
+            );
+            case "백설공주" -> new ClassicTemplate(
+                    classicTitle,
+                    "백설공주",
+                    "왕비",
+                    "백설공주는 숲에서 새로운 가족을 만났지만, 왕비의 거울은 여전히 두 사람을 비교하며 증오를 키우고 있었다.",
+                    "어느 날 거울이 백설공주에게 직접 말을 걸어 왕비가 사라지면 다음 주인이 같은 저주를 받게 된다고 경고했다.",
+                    "성으로 돌아가 왕비에게 거울의 저주를 알린다.",
+                    "일곱 친구와 함께 마법 거울을 깨뜨릴 방법을 찾는다."
+            );
+            case "신데렐라" -> new ClassicTemplate(
+                    classicTitle,
+                    "신데렐라",
+                    "새어머니",
+                    "신데렐라는 무도회에서 돌아온 뒤에도 재투성이 집으로 돌아가야 했고, 유리구두는 왕자의 선택만 기다리는 증표가 됐다.",
+                    "자정이 지난 뒤에도 사라지지 않은 두 번째 유리구두 안에서 왕실의 비밀 통로를 그린 지도가 발견됐다.",
+                    "유리구두를 버리고 자신의 힘으로 집을 떠난다.",
+                    "지도를 따라 왕실이 감춘 무도회의 진실을 확인한다."
+            );
+            default -> throw new IllegalArgumentException("unsupported classic title");
+        };
+    }
+
+    private String withTopic(String word) {
+        char last = word.charAt(word.length() - 1);
+        boolean hasFinalConsonant =
+                last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 != 0;
+        return word + (hasFinalConsonant ? "은" : "는");
     }
 
     private String createOpening(OpeningScene scene, List<Genre> secondaryGenres) {
@@ -218,6 +376,17 @@ public class MockStoryGenerationService implements StoryGenerationService {
             String decision,
             String immediateChoice,
             String investigativeChoice
+    ) {
+    }
+
+    private record ClassicTemplate(
+            String title,
+            String protagonist,
+            String antagonist,
+            String background,
+            String incident,
+            String firstChoice,
+            String secondChoice
     ) {
     }
 }
