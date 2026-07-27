@@ -7,12 +7,15 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class MockStoryGenerationService implements StoryGenerationService {
+public class MockStoryGenerationService {
 
-    @Override
     public GeneratedChapterResult generateOpening(Story story) {
-        OpeningScene scene = createScene(story.getPrimaryGenre());
-        String content = createOpening(scene, story.getSecondaryGenres());
+        return generateOpening(story.getGenres());
+    }
+
+    GeneratedChapterResult generateOpening(List<Genre> genres) {
+        OpeningScene scene = createScene(genres.getFirst());
+        String content = createOpening(scene, genres.subList(1, genres.size()));
 
         return new GeneratedChapterResult(
                 content,
@@ -20,9 +23,15 @@ public class MockStoryGenerationService implements StoryGenerationService {
         );
     }
 
-    @Override
     public GeneratedStoryResult generateClassicRemakeOpening(
             Story story,
+            String classicTitle,
+            String remakeType
+    ) {
+        return generateClassicRemakeOpening(classicTitle, remakeType);
+    }
+
+    GeneratedStoryResult generateClassicRemakeOpening(
             String classicTitle,
             String remakeType
     ) {

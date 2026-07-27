@@ -5,8 +5,9 @@ import com.taehyun.storyseed.story.domain.Choice;
 import com.taehyun.storyseed.story.domain.Genre;
 import com.taehyun.storyseed.story.domain.Story;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
-import com.taehyun.storyseed.story.generation.GeneratedChapterResult;
 import com.taehyun.storyseed.story.generation.GeneratedStoryResult;
+import com.taehyun.storyseed.story.generation.StoryGenerationMode;
+import com.taehyun.storyseed.story.generation.StoryGenerationRequest;
 import com.taehyun.storyseed.story.generation.StoryGenerationService;
 import com.taehyun.storyseed.story.repository.ChapterRepository;
 import com.taehyun.storyseed.story.repository.ChoiceRepository;
@@ -72,8 +73,9 @@ class StoryServiceTest {
 
                 주인공은 단서를 따라갈지 도움을 구할지 결정해야 했다.
                 """;
-        when(storyGenerationService.generateOpening(any(Story.class)))
-                .thenReturn(new GeneratedChapterResult(
+        when(storyGenerationService.generate(any(StoryGenerationRequest.class)))
+                .thenReturn(new GeneratedStoryResult(
+                        null,
                         openingContent,
                         List.of("단서를 조사한다.", "목격자를 찾는다.")
                 ));
@@ -88,6 +90,11 @@ class StoryServiceTest {
                 List.of(Genre.FANTASY, Genre.MYSTERY),
                 result.getGenres()
         );
+        ArgumentCaptor<StoryGenerationRequest> generationRequestCaptor =
+                ArgumentCaptor.forClass(StoryGenerationRequest.class);
+        verify(storyGenerationService).generate(generationRequestCaptor.capture());
+        assertEquals(StoryGenerationMode.GENRE, generationRequestCaptor.getValue().mode());
+        assertEquals(request.genres(), generationRequestCaptor.getValue().genres());
 
         ArgumentCaptor<Chapter> chapterCaptor = ArgumentCaptor.forClass(Chapter.class);
         verify(chapterRepository).save(chapterCaptor.capture());
@@ -120,11 +127,8 @@ class StoryServiceTest {
         CreateStoryRequest request = new CreateStoryRequest(List.of(Genre.FANTASY));
         when(storyRepository.save(any(Story.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        when(storyGenerationService.generateClassicRemakeOpening(
-                any(Story.class),
-                org.mockito.ArgumentMatchers.eq("흥부와 놀부"),
-                org.mockito.ArgumentMatchers.eq("villain")
-        )).thenReturn(new GeneratedStoryResult(
+        when(storyGenerationService.generate(any(StoryGenerationRequest.class)))
+                .thenReturn(new GeneratedStoryResult(
                 "흥부와 놀부: 놀부의 마지막 선택",
                 "흥부와 놀부의 악역은 오늘도 자신이 옳다고 믿었다.",
                 List.of("흥부를 찾아간다.", "제비의 행방을 조사한다.")
@@ -145,11 +149,14 @@ class StoryServiceTest {
                 result.getId(),
                 "흥부와 놀부: 놀부의 마지막 선택"
         );
-        verify(storyGenerationService).generateClassicRemakeOpening(
-                result,
-                "흥부와 놀부",
-                "villain"
-        );
+        ArgumentCaptor<StoryGenerationRequest> generationRequestCaptor =
+                ArgumentCaptor.forClass(StoryGenerationRequest.class);
+        verify(storyGenerationService).generate(generationRequestCaptor.capture());
+        StoryGenerationRequest generationRequest = generationRequestCaptor.getValue();
+        assertEquals(StoryGenerationMode.CLASSIC_REMAKE, generationRequest.mode());
+        assertEquals(List.of(Genre.FANTASY), generationRequest.genres());
+        assertEquals("흥부와 놀부", generationRequest.classicTitle());
+        assertEquals("villain", generationRequest.remakeType());
         verify(chapterRepository).save(any(Chapter.class));
         verify(choiceRepository, org.mockito.Mockito.times(2)).save(any(Choice.class));
     }

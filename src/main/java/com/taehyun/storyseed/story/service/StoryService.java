@@ -5,8 +5,8 @@ import com.taehyun.storyseed.story.domain.Chapter;
 import com.taehyun.storyseed.story.domain.Choice;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
 import com.taehyun.storyseed.story.dto.StoryDetailView;
-import com.taehyun.storyseed.story.generation.GeneratedChapterResult;
 import com.taehyun.storyseed.story.generation.GeneratedStoryResult;
+import com.taehyun.storyseed.story.generation.StoryGenerationRequest;
 import com.taehyun.storyseed.story.generation.StoryGenerationService;
 import com.taehyun.storyseed.story.repository.ChapterRepository;
 import com.taehyun.storyseed.story.repository.ChoiceRepository;
@@ -40,8 +40,10 @@ public class StoryService {
     public Story createStory(User user, CreateStoryRequest request) {
         validateUser(user);
         Story story = storyRepository.save(Story.create(user, request.genres()));
-        GeneratedChapterResult opening = storyGenerationService.generateOpening(story);
-        saveOpening(story, opening.content(), opening.choices());
+        GeneratedStoryResult generatedStory = storyGenerationService.generate(
+                StoryGenerationRequest.genre(request.genres())
+        );
+        saveOpening(story, generatedStory.content(), generatedStory.choices());
         return story;
     }
 
@@ -54,12 +56,13 @@ public class StoryService {
     ) {
         validateUser(user);
         Story story = storyRepository.save(Story.create(user, request.genres()));
-        GeneratedStoryResult generatedStory =
-                storyGenerationService.generateClassicRemakeOpening(
-                        story,
+        GeneratedStoryResult generatedStory = storyGenerationService.generate(
+                StoryGenerationRequest.classicRemake(
+                        request.genres(),
                         classicTitle,
                         remakeType
-                );
+                )
+        );
         storyRepository.updateTitle(story.getId(), generatedStory.title());
         saveOpening(story, generatedStory.content(), generatedStory.choices());
         return story;
