@@ -4,6 +4,7 @@ import com.taehyun.storyseed.story.domain.Story;
 import com.taehyun.storyseed.story.domain.Chapter;
 import com.taehyun.storyseed.story.domain.Choice;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
+import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
 import com.taehyun.storyseed.story.dto.StoryDetailView;
 import com.taehyun.storyseed.story.generation.GeneratedStoryResult;
 import com.taehyun.storyseed.story.generation.StoryGenerationRequest;
@@ -61,6 +62,29 @@ public class StoryService {
                         request.genres(),
                         classicTitle,
                         remakeType
+                )
+        );
+        storyRepository.updateTitle(story.getId(), generatedStory.title());
+        saveOpening(story, generatedStory.content(), generatedStory.choices());
+        return story;
+    }
+
+    @Transactional
+    public Story createCustomWorldStory(
+            User user,
+            CreateCustomWorldRequest request
+    ) {
+        validateUser(user);
+        java.util.List<com.taehyun.storyseed.story.domain.Genre> genres =
+                java.util.List.of(request.worldTheme().getGenre());
+        Story story = storyRepository.save(Story.create(user, genres));
+        GeneratedStoryResult generatedStory = storyGenerationService.generate(
+                StoryGenerationRequest.customWorld(
+                        genres,
+                        request.worldName(),
+                        request.worldTheme(),
+                        request.worldEra(),
+                        request.protagonistName()
                 )
         );
         storyRepository.updateTitle(story.getId(), generatedStory.title());

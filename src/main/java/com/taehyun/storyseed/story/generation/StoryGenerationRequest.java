@@ -8,7 +8,11 @@ public record StoryGenerationRequest(
         StoryGenerationMode mode,
         List<Genre> genres,
         String classicTitle,
-        String remakeType
+        String remakeType,
+        String worldName,
+        WorldTheme worldTheme,
+        WorldEra worldEra,
+        String protagonistName
 ) {
 
     public StoryGenerationRequest {
@@ -19,6 +23,10 @@ public record StoryGenerationRequest(
         return new StoryGenerationRequest(
                 StoryGenerationMode.GENRE,
                 genres,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null
         );
@@ -33,7 +41,30 @@ public record StoryGenerationRequest(
                 StoryGenerationMode.CLASSIC_REMAKE,
                 genres,
                 classicTitle,
-                remakeType
+                remakeType,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    public static StoryGenerationRequest customWorld(
+            List<Genre> genres,
+            String worldName,
+            WorldTheme worldTheme,
+            WorldEra worldEra,
+            String protagonistName
+    ) {
+        return new StoryGenerationRequest(
+                StoryGenerationMode.CUSTOM_WORLD,
+                genres,
+                null,
+                null,
+                worldName,
+                worldTheme,
+                worldEra,
+                protagonistName
         );
     }
 }

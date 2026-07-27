@@ -1,5 +1,8 @@
 package com.taehyun.storyseed.story.controller;
 
+import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
+import com.taehyun.storyseed.story.generation.WorldEra;
+import com.taehyun.storyseed.story.generation.WorldTheme;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +46,21 @@ public class StoryStartController {
     public String showClassicStories(Model model) {
         model.addAttribute("classicStories", CLASSIC_STORIES);
         return "story/classics";
+    }
+
+    @GetMapping("/world")
+    public String showCustomWorldForm(Model model) {
+        model.addAttribute(
+                "request",
+                new CreateCustomWorldRequest("", null, null, "")
+        );
+        addCustomWorldOptions(model);
+        return "story/world";
+    }
+
+    static void addCustomWorldOptions(Model model) {
+        model.addAttribute("worldThemes", WorldTheme.values());
+        model.addAttribute("worldEras", WorldEra.values());
     }
 
     @GetMapping("/classics/{classicId}")

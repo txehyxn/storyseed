@@ -5,6 +5,7 @@ import com.taehyun.storyseed.config.jwt.JwtTokenProvider;
 import com.taehyun.storyseed.story.domain.Genre;
 import com.taehyun.storyseed.story.domain.Story;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
+import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
 import com.taehyun.storyseed.story.dto.StoryDetailView;
 import com.taehyun.storyseed.story.service.StoryService;
 import com.taehyun.storyseed.user.domain.User;
@@ -180,6 +181,52 @@ class StoryControllerTest {
         verify(storyService, never()).createClassicRemakeStory(
                 any(), any(), any(), any()
         );
+    }
+
+    @Test
+    void createCustomWorldStoryRedirectsToCreatedStory() throws Exception {
+        Story story = mock(Story.class);
+        when(story.getId()).thenReturn(30L);
+        when(storyService.createCustomWorldStory(
+                any(User.class),
+                any(CreateCustomWorldRequest.class)
+        )).thenReturn(story);
+
+        mockMvc.perform(post("/stories")
+                        .cookie(accessTokenCookie)
+                        .with(csrf())
+                        .param("generationMode", "CUSTOM_WORLD")
+                        .param("worldName", "아르카디아")
+                        .param("worldTheme", "FANTASY")
+                        .param("worldEra", "MEDIEVAL")
+                        .param("protagonistName", "카인"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/stories/30"));
+
+        verify(storyService).createCustomWorldStory(
+                any(User.class),
+                any(CreateCustomWorldRequest.class)
+        );
+        verify(storyService, never()).createStory(any(), any());
+    }
+
+    @Test
+    void createCustomWorldStoryRejectsMissingRequiredInputs() throws Exception {
+        mockMvc.perform(post("/stories")
+                        .cookie(accessTokenCookie)
+                        .with(csrf())
+                        .param("generationMode", "CUSTOM_WORLD"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/world"))
+                .andExpect(model().attributeHasFieldErrors(
+                        "request",
+                        "worldName",
+                        "worldTheme",
+                        "worldEra",
+                        "protagonistName"
+                ));
+
+        verify(storyService, never()).createCustomWorldStory(any(), any());
     }
 
     @Test

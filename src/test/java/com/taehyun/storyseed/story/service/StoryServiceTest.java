@@ -5,9 +5,12 @@ import com.taehyun.storyseed.story.domain.Choice;
 import com.taehyun.storyseed.story.domain.Genre;
 import com.taehyun.storyseed.story.domain.Story;
 import com.taehyun.storyseed.story.dto.CreateStoryRequest;
+import com.taehyun.storyseed.story.dto.CreateCustomWorldRequest;
 import com.taehyun.storyseed.story.generation.GeneratedStoryResult;
 import com.taehyun.storyseed.story.generation.StoryGenerationMode;
 import com.taehyun.storyseed.story.generation.StoryGenerationRequest;
+import com.taehyun.storyseed.story.generation.WorldEra;
+import com.taehyun.storyseed.story.generation.WorldTheme;
 import com.taehyun.storyseed.story.generation.StoryGenerationService;
 import com.taehyun.storyseed.story.repository.ChapterRepository;
 import com.taehyun.storyseed.story.repository.ChoiceRepository;
@@ -157,6 +160,46 @@ class StoryServiceTest {
         assertEquals(List.of(Genre.FANTASY), generationRequest.genres());
         assertEquals("흥부와 놀부", generationRequest.classicTitle());
         assertEquals("villain", generationRequest.remakeType());
+        verify(chapterRepository).save(any(Chapter.class));
+        verify(choiceRepository, org.mockito.Mockito.times(2)).save(any(Choice.class));
+    }
+
+    @Test
+    void createCustomWorldStoryUsesCustomWorldGeneratorAndExistingPipeline() {
+        User user = createUser();
+        CreateCustomWorldRequest request = new CreateCustomWorldRequest(
+                "아르카디아",
+                WorldTheme.FANTASY,
+                WorldEra.MEDIEVAL,
+                "카인"
+        );
+        when(storyRepository.save(any(Story.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(storyGenerationService.generate(any(StoryGenerationRequest.class)))
+                .thenReturn(new GeneratedStoryResult(
+                        "아르카디아: 붉은 달의 시작",
+                        "아르카디아에서는 붉은 달이 떠올랐다.",
+                        List.of("붉은 숲으로 향한다.", "왕도로 들어간다.")
+                ));
+        when(chapterRepository.save(any(Chapter.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Story result = storyService.createCustomWorldStory(user, request);
+
+        assertEquals(List.of(Genre.FANTASY), result.getGenres());
+        ArgumentCaptor<StoryGenerationRequest> generationRequestCaptor =
+                ArgumentCaptor.forClass(StoryGenerationRequest.class);
+        verify(storyGenerationService).generate(generationRequestCaptor.capture());
+        StoryGenerationRequest generationRequest = generationRequestCaptor.getValue();
+        assertEquals(StoryGenerationMode.CUSTOM_WORLD, generationRequest.mode());
+        assertEquals("아르카디아", generationRequest.worldName());
+        assertEquals(WorldTheme.FANTASY, generationRequest.worldTheme());
+        assertEquals(WorldEra.MEDIEVAL, generationRequest.worldEra());
+        assertEquals("카인", generationRequest.protagonistName());
+        verify(storyRepository).updateTitle(
+                result.getId(),
+                "아르카디아: 붉은 달의 시작"
+        );
         verify(chapterRepository).save(any(Chapter.class));
         verify(choiceRepository, org.mockito.Mockito.times(2)).save(any(Choice.class));
     }

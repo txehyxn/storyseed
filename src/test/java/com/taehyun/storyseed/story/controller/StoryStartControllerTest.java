@@ -76,8 +76,25 @@ class StoryStartControllerTest {
                 .andExpect(content().string(containsString("이어서 쓰기")))
                 .andExpect(content().string(containsString("href=\"/stories/new\"")))
                 .andExpect(content().string(containsString("href=\"/story/classics\"")))
+                .andExpect(content().string(containsString("href=\"/story/world\"")))
                 .andExpect(content().string(containsString("사용 가능")))
                 .andExpect(content().string(containsString("준비 중")));
+    }
+
+    @Test
+    void customWorldPageShowsFourInputsAndOptions() throws Exception {
+        mockMvc.perform(get("/story/world").cookie(accessTokenCookie))
+                .andExpect(status().isOk())
+                .andExpect(view().name("story/world"))
+                .andExpect(model().attributeExists("request", "worldThemes", "worldEras"))
+                .andExpect(content().string(containsString("name=\"worldName\"")))
+                .andExpect(content().string(containsString("name=\"worldTheme\"")))
+                .andExpect(content().string(containsString("name=\"worldEra\"")))
+                .andExpect(content().string(containsString("name=\"protagonistName\"")))
+                .andExpect(content().string(containsString("판타지")))
+                .andExpect(content().string(containsString("근미래")))
+                .andExpect(content().string(containsString("세계 만들기")))
+                .andExpect(content().string(containsString("name=\"_csrf\"")));
     }
 
     @Test

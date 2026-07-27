@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>나만의 세계 만들기 | StorySeed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+<main class="auth-card story-card">
+    <a class="brand" th:href="@{/home}" href="/home">StorySeed</a>
+    <h1>나만의 세계 만들기</h1>
+    <p>세계와 주인공을 정하고 첫 이야기를 시작해 보세요.</p>
+
+    <form class="world-form"
+          th:action="@{/stories}"
+          th:object="${request}"
+          method="post">
+        <input type="hidden" name="generationMode" value="CUSTOM_WORLD">
+
+        <label for="worldName">세계 이름</label>
+        <input id="worldName"
+               type="text"
+               th:field="*{worldName}"
+               maxlength="40"
+               placeholder="예: 아르카디아">
+
+        <label for="worldTheme">세계 분위기</label>
+        <select id="worldTheme" th:field="*{worldTheme}">
+            <option value="">분위기를 선택하세요</option>
+            <option th:each="theme : ${worldThemes}"
+                    th:value="${theme.name()}"
+                    th:text="${theme.displayName}">판타지</option>
+        </select>
+
+        <label for="worldEra">시대</label>
+        <select id="worldEra" th:field="*{worldEra}">
+            <option value="">시대를 선택하세요</option>
+            <option th:each="era : ${worldEras}"
+                    th:value="${era.name()}"
+                    th:text="${era.displayName}">중세</option>
+        </select>
+
+        <label for="protagonistName">주인공 이름</label>
+        <input id="protagonistName"
+               type="text"
+               th:field="*{protagonistName}"
+               maxlength="30"
+               placeholder="예: 카인">
+
+        <p class="message error"
+           th:if="${#fields.hasAnyErrors()}"
+           th:each="error : ${#fields.allErrors()}"
+           th:text="${error}"></p>
+
+        <button type="submit">세계 만들기</button>
+    </form>
+
+    <a class="back-link" th:href="@{/story/start}" href="/story/start">이야기 시작으로 돌아가기</a>
+</main>
+</body>
+</html>
